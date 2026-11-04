@@ -317,6 +317,25 @@ def test_stormcrawler_config(tmp_path):
     assert "//IMG/@src" in json.dumps(links)
 
 
+def test_ccnutch_site_config(monkeypatch):
+    import subprocess
+    import xml.etree.ElementTree as ET
+    from crawlertests.crawlers import ccnutch
+    example = ('<?xml version="1.0"?>\n<configuration>\n'
+               '<property><name>http.agent.name</name><value></value><description>d</description></property>\n'
+               '<property><name>fetcher.server.delay</name><value>6.0</value></property>\n'
+               '<property><name>http.content.limit</name><value>5242880</value></property>\n'
+               '</configuration>\n')
+    monkeypatch.setattr(ccnutch.subprocess, "run",
+                        lambda cmd, **kw: subprocess.CompletedProcess(cmd, 0, example, ""))
+    crawler = ccnutch.CCNutch("n", {"engine": "podman", "conf": {"http.content.limit": -1, "db.max.outlinks.per.page": 500}})
+    props = {p.findtext("name"): p.findtext("value") for p in ET.fromstring(crawler.site_config()).iter("property")}
+    assert props["http.agent.name"] == "crawlertests"
+    assert props["fetcher.server.delay"] == "0.0"
+    assert props["http.content.limit"] == "-1" and props["db.max.outlinks.per.page"] == "500"
+    assert crawler.seed_host() == "host.containers.internal"
+
+
 def test_records_saving_and_site(tmp_path):
     from crawlertests.history import load_records, make_record, save_run, score_record, write_record
     from crawlertests.site import build_site

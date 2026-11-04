@@ -84,4 +84,7 @@ def make_crawler(name: str, config: dict) -> Crawler:
     if kind == "stormcrawler":
         from .stormcrawler import StormCrawler
         return StormCrawler(name, config)
+    if kind == "ccnutch":
+        from .ccnutch import CCNutch
+        return CCNutch(name, config)
     raise ValueError(f"unknown crawler type {kind!r} for {name}")
