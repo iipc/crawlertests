@@ -2,13 +2,13 @@ title = "Source maps"
 description = "Source map references in JS and CSS comments, the SourceMap and X-SourceMap response headers, and a WebAssembly sourceMappingURL custom section. Maps resolve against the file that references them. Not needed for replay, but useful for troubleshooting. See heritrix3#795."
 tags = ["js", "css", "http", "source-maps"]
 expect = [
-  "assets/line.js", "assets/line.js.map",
-  "assets/block.js", "assets/block.js.map",
-  "assets/style.css", "assets/style.css.map",
-  "assets/header.js", "assets/header.js.map",
-  "assets/x-header.js", "assets/x-header.js.map",
+  "assets/line.js.map",
+  "assets/block.js.map",
+  "assets/style.css.map",
+  "assets/header.js.map",
+  "assets/x-header.js.map",
   "inline.js.map",
-  "assets/module.wasm", "assets/module.wasm.map",
+  "assets/module.wasm.map",
 ]
 # where the same references land if resolved against the page instead
 expect_not = ["line.js.map", "block.js.map", "style.css.map", "header.js.map", "module.wasm.map"]

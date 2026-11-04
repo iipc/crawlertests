@@ -106,6 +106,17 @@ class Case:
     def seeds(self) -> set[str]:
         return {self.marker + self.prefix, self.marker + self.prefix + "index.html"}
 
+    def served_paths(self) -> set[str]:
+        """Normalized paths this case serves on purpose: its files (and directory indexes) and routes."""
+        paths = {self.prefix + r for r in self.routes}
+        for f in self.dir.rglob("*"):
+            rel = f.relative_to(self.dir).as_posix()
+            if f.is_file() and rel != "case.toml" and not f.name.startswith("."):
+                paths.add(self.prefix + rel)
+                if f.name == "index.html":
+                    paths.add(self.prefix + rel[:-len("index.html")])
+        return {normalize_path(p) for p in paths}
+
     def owns(self, key: str) -> bool:
         """True if a normalized URL key falls within this case's directory on any origin, or is one of its
         root files (on the primary origin only)."""

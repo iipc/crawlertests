@@ -6,8 +6,7 @@ Sitemap: {{ORIGIN}}/cases/sitemaps/sitemap-index.xml
 Sitemap: {{ORIGIN}}/cases/sitemaps/sitemap.txt
 """
 expect = [
-  "/robots.txt",
-  "sitemap-index.xml", "sitemap-pages.xml", "sitemap-news.xml.gz", "sitemap.txt",
+  
   "page-1.html", "page-1-fr.html", "page-2.html", "image-1.png",
   "from-gzipped-sitemap.html", "from-text-sitemap.html",
 ]

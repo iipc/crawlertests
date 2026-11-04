@@ -2,7 +2,6 @@ title = "Standalone SVG document"
 description = "References from inside an SVG file loaded as a document: embeds (image, use, feImage, script, paint servers, filters, textPath, mpath, xml-stylesheet, presentation attributes, legacy font-face-uri, animate/set values), CSS in style elements and attributes, navigation links and HTML inside foreignObject. URLs resolve against the SVG's own URL. See heritrix3#796."
 tags = ["svg"]
 expect = [
-  "doc/drawing.svg",
   # embeds
   "doc/image.png", "doc/xlink-image.png", "doc/use.svg", "doc/feimage.png", "doc/script.js",
   "doc/gradients.svg", "doc/patterns.svg", "doc/filters.svg", "doc/text-path.svg", "doc/motion.svg",

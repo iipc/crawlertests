@@ -2,7 +2,6 @@ title = "MPEG-DASH manifest"
 description = "Segment URLs in a DASH manifest (application/dash+xml): BaseURL, SegmentList with Initialization and SegmentURL, SegmentTemplate with $RepresentationID$ and $Number$ expanded over the presentation duration, and a single-file representation. URLs resolve against the manifest and its BaseURLs. See heritrix3#798."
 tags = ["media", "streaming"]
 expect = [
-  "stream/manifest.mpd",
   "stream/video/init.mp4", "stream/video/seg-1.m4s", "stream/video/seg-2.m4s",
   "stream/audio/init-a1.mp4", "stream/audio/a1-1.m4s", "stream/audio/a1-2.m4s", "stream/audio/a1-3.m4s",
   "stream/single/whole.mp4",

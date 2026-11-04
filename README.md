@@ -112,6 +112,14 @@ origin from an HTTPS case. They're compared after normalizing
 percent-encoding, ignoring the hostname (crawlers in containers reach the
 server under a different name).
 
+Only expect the URLs a case is about. Leave out the steps on the way to them
+that other cases already test: the `<script src>` that carries a source map
+comment, the link to a redirect, the page that a gzipped body arrives on. A
+crawler that misses one of those misses the URL behind it anyway, so listing
+them too only counts the same failure twice and dilutes the score with what
+every crawler gets right. Editing `expect`, `expect_not`, `title`,
+`description` or `tags` re-scores saved runs without making the case stale.
+
 An expectation can also require the request method or the response status:
 
 ```toml

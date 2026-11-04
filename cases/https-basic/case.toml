@@ -3,6 +3,6 @@ description = "A site served only over HTTPS (with a self-signed certificate, wh
 tags = ["https", "embeds"]
 https = true
 expect = [
-  "style.css", "style-bg.png", "script.js", "img.png", "page.html", "page-img.png",
+  "img.png", "page.html", 
   "{HTTPS_OTHER}/cases/https-basic/other-img.png",
 ]

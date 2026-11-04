@@ -1,7 +1,7 @@
 """Scoring each crawler's captures against each case's expectations."""
 
 from .cases import Case, Expectation
-from .urls import normalize, normalize_path
+from .urls import normalize, normalize_path, split_marker
 from .warcs import Capture
 
 
@@ -30,7 +30,9 @@ def score_case(case: Case, captured: dict[str, list[Capture]], requested: set[st
     expect = {exp.label: check(exp) for exp in case.expected()}
     expect_not = {exp.label: check(exp) for exp in case.unexpected()}
     known = {exp.key for exp in case.expected() + case.unexpected()} | case.seeds()
-    extra = sorted(k for k in captured if case.owns(k) and k not in known)
+    # URLs the case serves on purpose but doesn't expect (steps on the way to what it tests) aren't "other"
+    served = case.served_paths() | set(case.root) | ({"/robots.txt"} if case.robots else set())
+    extra = sorted(k for k in captured if case.owns(k) and k not in known and split_marker(k)[1] not in served)
     not_archived = sorted(k for k in (requested or ()) if case.owns(k) and k not in captured)
 
     missed = sum(not r["captured"] for r in expect.values())

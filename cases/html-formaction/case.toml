@@ -1,4 +1,4 @@
 title = "Form submitter actions"
 description = "formaction on <button> and <input type=submit|image> overrides the form's action for that submitter. See heritrix3#797."
 tags = ["html", "forms"]
-expect = ["form-action.html", "button-action.html", "input-action.html", "image-action.html", "input.png"]
+expect = ["form-action.html", "button-action.html", "input-action.html", "image-action.html"]

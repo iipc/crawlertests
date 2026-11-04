@@ -5,5 +5,5 @@ robots = """
 Disallow: /cases/robots-txt-end-anchor/*.pdf$
 Disallow: /cases/robots-txt-end-anchor/exact.html$
 """
-expect = ["/robots.txt", "report.pdf?download=1", "report.pdf.html", "exact.html?page=2", "exact.html5"]
+expect = ["report.pdf?download=1", "report.pdf.html", "exact.html?page=2", "exact.html5"]
 expect_not = ["report.pdf", "files/manual.pdf", "exact.html"]

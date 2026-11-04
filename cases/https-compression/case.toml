@@ -3,8 +3,8 @@ description = "Pages and a stylesheet sent with br or zstd Content-Encoding, whi
 tags = ["https", "http", "compression"]
 https = true
 expect = [
-  "br.html", "from-br.html", "zstd.html", "from-zstd.html", "forced-br.html", "from-forced-br.html",
-  "style.css", "from-br-css.png",
+  "from-br.html", "from-zstd.html", "from-forced-br.html",
+  "from-br-css.png",
 ]
 
 [[routes]]

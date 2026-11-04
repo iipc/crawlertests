@@ -2,25 +2,15 @@ title = "Refresh response header"
 description = "Pages that redirect with a Refresh HTTP header rather than a status code, in each syntax browsers accept: a delay, a URL with or without the url= prefix, either separator, optional quotes and spacing, and an absolute URL. The bodies contain no links."
 tags = ["http", "redirects"]
 expect = [
-  "refresh-zero",
   "zero.html",
-  "refresh-delayed",
   "delayed.html",
-  "refresh-upper",
   "upper.html",
-  "refresh-spaces",
   "spaces.html",
-  "refresh-comma",
   "comma.html",
-  "refresh-single-quoted",
   "single-quoted.html",
-  "refresh-double-quoted",
   "double-quoted.html",
-  "refresh-bare",
   "bare.html",
-  "refresh-fractional",
   "fractional.html",
-  "refresh-absolute",
   "absolute.html",
 ]
 # what a parser that keeps the quotes would request

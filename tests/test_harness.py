@@ -5,6 +5,7 @@ import json
 import shutil
 from io import BytesIO
 import ssl
+import subprocess
 import urllib.request
 import zlib
 import xml.dom.minidom
@@ -382,8 +383,8 @@ def test_records_saving_and_site(tmp_path):
 
 
 def test_case_hashes_merging_and_stale_cases(tmp_path):
-    from crawlertests.history import HARNESS_VERSION, CaseHashes, case_hash, heritrix_java, merge_builds, \
-        stale_versions
+    from crawlertests.history import HARNESS_VERSION, HASH_SCHEME, CaseHashes, case_hash, heritrix_java, \
+        merge_builds, stale_versions
 
     for name in ("a", "b"):
         (tmp_path / name).mkdir()
@@ -396,11 +397,27 @@ def test_case_hashes_merging_and_stale_cases(tmp_path):
     def record(run, crawled, time, version="3.10.0", case_hashes=None, harness=HARNESS_VERSION):
         return {"run": run, "crawler": "heritrix", "type": "heritrix", "track": "release",
                 "version": {"version": version, "date": f"2025-0{version[2]}-01"}, "cases": crawled,
-                "time": time, "harness": harness,
+                "time": time, "harness": harness, "hash_scheme": HASH_SCHEME,
                 "case_hashes": case_hashes if case_hashes is not None else {c: original[c] for c in crawled}}
 
     full = record("r1", ["a", "b"], "2026-01-01")
     assert stale_versions([full], hashes) == []
+
+    # editing what a case expects only re-scores it; editing what it serves makes it stale
+    (tmp_path / "a" / "case.toml").write_text('title = "A"\nexpect = ["a.png", "a2.png"]\nexpect_not = ["x"]\n')
+    assert case_hash(tmp_path / "a") == original["a"]
+    (tmp_path / "a" / "case.toml").write_text('expect = ["a.png"]\nroot = { "/a.ico" = "a.ico" }\n')
+    assert case_hash(tmp_path / "a") != original["a"]
+    (tmp_path / "a" / "case.toml").write_text('expect = ["a.png"]\n')
+
+    # the same hashes can be computed from git for any commit
+    subprocess.run(["git", "init", "-q", str(tmp_path / "repo")], check=True)
+    shutil.copytree(tmp_path / "a", tmp_path / "repo" / "cases" / "a")
+    git = ["git", "-C", str(tmp_path / "repo"), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(git + ["add", "."], check=True)
+    subprocess.run(git + ["commit", "-qm", "a"], check=True)
+    rev = subprocess.run(git + ["rev-parse", "HEAD"], check=True, capture_output=True, text=True).stdout.strip()
+    assert CaseHashes(cases, tmp_path / "repo").at(rev) == {"a": original["a"]}
 
     (tmp_path / "b" / "index.html").write_text('<img src="b2.png">\n')  # edit one case's fixtures
     hashes = CaseHashes(load_cases(tmp_path))

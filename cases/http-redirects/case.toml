@@ -2,8 +2,8 @@ title = "HTTP redirects"
 description = "301, 302, 307 and 308 redirects and a redirect chain. The Refresh header has its own case."
 tags = ["http", "redirects"]
 expect = [
-  "r301", "target-301.html", "r302", "target-302.html", "r307", "target-307.html",
-  "r308", "target-308.html", "chain-1", "chain-2", "chain-end.html",
+  "target-301.html", "target-302.html", "target-307.html",
+  "target-308.html", "chain-end.html",
 ]
 
 [[routes]]

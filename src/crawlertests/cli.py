@@ -23,7 +23,7 @@ from pathlib import Path
 from .cases import load_cases
 from .compare import captured_keys, requested_keys
 from .crawlers import CrawlError, make_crawler
-from .history import (HARNESS_VERSION, CaseHashes, case_hash, load_records, make_record, results_for, save_run,
+from .history import (HARNESS_VERSION, HASH_SCHEME, CaseHashes, case_hash, load_records, make_record, results_for, save_run,
                       stale_versions, write_record)
 from .report import text_summary, write_html, write_json
 from .server import FixtureServer, dump_log
@@ -162,7 +162,8 @@ def run(args, config) -> int:
             "suite": suite_version(args.cases_dir), "platform": f"{platform.system().lower()}-{platform.machine()}",
             "origins": {str(port): marker for port, marker in server.origins.items()},
             "cases": list(cases), "harness": HARNESS_VERSION,
-            "case_hashes": {name: case_hash(case.dir) for name, case in cases.items()}, "crawlers": {}}
+            "case_hashes": {name: case_hash(case.dir) for name, case in cases.items()}, "hash_scheme": HASH_SCHEME,
+            "crawlers": {}}
     try:
         for crawler in crawlers:
             meta["crawlers"][crawler.name] = run_crawler(crawler, cases, server, run_dir)

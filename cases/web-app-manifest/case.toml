@@ -2,7 +2,7 @@ title = "Web app manifest"
 description = "URLs inside a web app manifest: start_url, icons, screenshots, shortcuts and their icons, and share_target. They resolve against the manifest's URL. See heritrix3#800."
 tags = ["pwa"]
 expect = [
-  "app/app.webmanifest", "app/start.html", "app/icon-192.png", "app/icons/icon-512.png",
+  "app/start.html", "app/icon-192.png", "app/icons/icon-512.png",
   "app/screenshot.png", "app/shortcut.html", "app/shortcut-icon.png", "app/share.html",
 ]
 # where the same URLs land if resolved against the page instead

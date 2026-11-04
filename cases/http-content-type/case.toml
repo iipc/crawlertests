@@ -2,9 +2,9 @@ title = "Unusual Content-Type headers"
 description = "Responses whose Content-Type is missing, wrong or unusually written, in the ways browsers still accept: classic scripts served as text/plain, text/html or with no type; an HTML page with no type (browsers sniff it); an HTML type in mixed case with parameters; and an XHTML page served as application/xhtml+xml."
 tags = ["http", "content-type"]
 expect = [
-  "plain.js", "from-plain-js.png", "html-typed.js", "from-html-typed-js.png", "untyped.js", "from-untyped-js.png",
-  "untyped-page", "from-untyped-page.html", "mixed-case-type", "from-mixed-case-type.html",
-  "page.xhtml", "from-xhtml.html",
+  "from-plain-js.png", "from-html-typed-js.png", "from-untyped-js.png",
+  "from-untyped-page.html", "from-mixed-case-type.html",
+  "from-xhtml.html",
 ]
 
 [[routes]]

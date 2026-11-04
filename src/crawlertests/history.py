@@ -18,6 +18,7 @@ Records are stored as <results>/runs/<run>/<crawler>.json.
 import hashlib
 import json
 import subprocess
+import tomllib
 from collections import defaultdict
 from pathlib import Path
 
@@ -52,6 +53,7 @@ def make_record(meta: dict, name: str, captured: dict[str, list[Capture]], reque
         "cases": meta["cases"],
         "harness": meta.get("harness"),
         "case_hashes": meta.get("case_hashes"),
+        "hash_scheme": meta.get("hash_scheme"),
         "captures": [list(t) for t in captures],
         "requested": sorted(requested),
     }
@@ -151,8 +153,26 @@ def version_key(record: dict) -> tuple:
     return record["crawler"], record.get("track"), v.get("version"), v.get("revision")
 
 
+# How case_hash() is computed. Records hashed another way are re-hashed from git at their suite revision.
+HASH_SCHEME = 2
+
+# case.toml keys that only describe or score a case. Editing them re-scores saved runs but doesn't change what
+# a crawler sees, so it doesn't make a case stale.
+_SCORING_KEYS = {"title", "description", "tags", "expect", "expect_not"}
+
+
 def _blob_id(data: bytes) -> str:
     return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def _toml_id(data: bytes) -> str:
+    """An id for a case.toml covering only what affects the fixtures (routes, robots rules, ...)."""
+    try:
+        parsed = tomllib.loads(data.decode())
+    except (UnicodeDecodeError, tomllib.TOMLDecodeError):
+        return _blob_id(data)
+    served = {k: v for k, v in parsed.items() if k not in _SCORING_KEYS}
+    return _blob_id(json.dumps(served, sort_keys=True, default=str).encode())
 
 
 def _hash_listing(entries: list[tuple[str, str]]) -> str:
@@ -161,38 +181,58 @@ def _hash_listing(entries: list[tuple[str, str]]) -> str:
 
 
 def case_hash(case_dir: Path) -> str:
-    """A hash of a case's fixture files: their paths and git blob ids, so it can also be computed for any past
-    commit from git alone (CaseHashes.at)."""
-    return _hash_listing([(p.relative_to(case_dir).as_posix(), _blob_id(p.read_bytes()))
+    """A hash of what a crawler sees of a case: its fixture files' paths and git blob ids, with case.toml reduced
+    to its serving keys. It can also be computed for any past commit from git alone (CaseHashes.at)."""
+    return _hash_listing([(p.relative_to(case_dir).as_posix(),
+                           _toml_id(p.read_bytes()) if p.name == "case.toml" and p.parent == case_dir
+                           else _blob_id(p.read_bytes()))
                           for p in case_dir.rglob("*") if p.is_file()])
 
 
 class CaseHashes:
-    """Case fixture hashes, now and as of past commits, for records saved before hashes were recorded."""
+    """Case fixture hashes, now and as of past commits, for records saved before hashes were recorded (or
+    hashed with an older HASH_SCHEME)."""
 
     def __init__(self, cases: dict[str, Case], repo: Path | None = None):
         self.current = {name: case_hash(case.dir) for name, case in cases.items()}
         self.repo = repo
         self._at: dict[str, dict[str, str]] = {}
 
+    def _git(self, *args, input=None) -> bytes | None:
+        out = subprocess.run(["git", "-C", str(self.repo), *args], capture_output=True, input=input)
+        return out.stdout if out.returncode == 0 else None
+
     def at(self, revision: str | None) -> dict[str, str]:
         if not revision or self.repo is None:
             return {}
         if revision not in self._at:
-            out = subprocess.run(["git", "-C", str(self.repo), "ls-tree", "-r", revision, "--", "cases"],
-                                 capture_output=True, text=True)
             files: dict[str, list] = {}
-            for line in out.stdout.splitlines() if out.returncode == 0 else []:
+            tomls = []
+            for line in (self._git("ls-tree", "-r", revision, "--", "cases") or b"").decode().splitlines():
                 meta, path = line.split("\t", 1)
                 parts = path.split("/", 2)
                 if len(parts) == 3:
-                    files.setdefault(parts[1], []).append((parts[2], meta.split()[2]))
-            self._at[revision] = {name: _hash_listing(entries) for name, entries in files.items()}
+                    entry = [parts[2], meta.split()[2]]
+                    files.setdefault(parts[1], []).append(entry)
+                    if parts[2] == "case.toml":
+                        tomls.append(entry)
+            if tomls:
+                # read every case.toml in one go: "<blob> blob <size>\n<data>\n" each
+                out = self._git("cat-file", "--batch", input="".join(f"{e[1]}\n" for e in tomls).encode()) or b""
+                pos = 0
+                for entry in tomls:
+                    header_end = out.index(b"\n", pos)
+                    size = int(out[pos:header_end].split()[2])
+                    entry[1] = _toml_id(out[header_end + 1:header_end + 1 + size])
+                    pos = header_end + 1 + size + 1
+            self._at[revision] = {name: _hash_listing([tuple(e) for e in entries]) for name, entries in files.items()}
         return self._at[revision]
 
     def of(self, record: dict) -> dict[str, str]:
         """The fixture hash of each case the record crawled (empty where unknown)."""
-        return record.get("case_hashes") or self.at((record.get("suite") or {}).get("revision"))
+        if record.get("case_hashes") and record.get("hash_scheme") == HASH_SCHEME:
+            return record["case_hashes"]
+        return self.at((record.get("suite") or {}).get("revision")) or {}
 
     def fresh(self, record: dict, case: str) -> bool:
         """Whether the record's results for a case are still valid: same harness and same fixtures. A case
