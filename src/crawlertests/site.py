@@ -17,7 +17,7 @@ from pathlib import Path
 from .cases import Case
 from .compare import crawler_scores
 from .history import CaseHashes, crawler_note, load_records, merge_builds, results_for, score_record
-from .report import STYLE, _cell_class, _e, _ratio, case_details, cases_table, page, scores_table
+from .report import STYLE, _captured, _cell_class, _e, _ratio, case_details, cases_table, page, scores_table
 
 SOURCE = "https://github.com/iipc/crawlertests"
 
@@ -315,12 +315,13 @@ def _write_history(out: Path, slug: str, records: list[dict], cases, scored, lim
                 cells.append('<td class="na">–</td>')
                 previous = None
                 continue
-            changed = " changed" if previous is not None and previous != result["hits"] else ""
+            now = (_captured(result), result["overcrawled"])
+            changed = " changed" if previous is not None and previous != now else ""
             over = f'<span class="over">+{result["overcrawled"]}</span>' if result["overcrawled"] else ""
             cells.append(f'<td class="rate {_cell_class(result)}{changed}">'
-                         f'<a href="../runs/{_e(r["run"])}/index.html#{_e(name)}">{result["hits"]}/{result["total"]}'
+                         f'<a href="../runs/{_e(r["run"])}/index.html#{_e(name)}">{"%d/%d" % _captured(result)}'
                          f'</a>{over}</td>')
-            previous = result["hits"]
+            previous = now
         if any(name in scored[(r["run"], r["crawler"])][0] for r in records):
             rows.append(f'<tr><th scope="row" title="{_e(case.title)}">{_e(name)}</th>{"".join(cells)}</tr>')
     body = f"""<nav><a href="../index.html">← all results</a><a href="../compare.html">compare runs</a></nav>

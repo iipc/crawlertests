@@ -17,8 +17,7 @@ def text_summary(results: dict) -> str:
             if r is None:
                 cells.append("-".ljust(col_width))
             else:
-                mark = "PASS" if r["passed"] else "FAIL"
-                cells.append(f"{mark} {r['hits']}/{r['total']}".ljust(col_width))
+                cells.append(_cell_text(r).ljust(col_width))
         lines.append(name.ljust(name_width) + "  " + "  ".join(cells))
     lines.append("")
     lines.append(f"{'crawler'.ljust(col_width)}  {'captured':>15}  {'overcrawled':>15}  {'accuracy':>15}")
@@ -62,13 +61,26 @@ def _mark(ok: bool | None) -> str:
 PASS_BUCKETS = [(0.2, "hardly"), (0.4, "a-few"), (0.6, "half"), (0.8, "lots"), (1.0, "most")]
 
 
+def _captured(r: dict) -> tuple[int, int]:
+    """(captured, expected) for a case result: the "should capture" expectations only."""
+    expected = len(r["expect"])
+    return expected - r["missed"], expected
+
+
+def _cell_text(r: dict) -> str:
+    """A case cell: expected URLs captured, then +N overcrawled."""
+    captured, expected = _captured(r)
+    return f"{captured}/{expected}" + (f" +{r['overcrawled']}" if r["overcrawled"] else "")
+
+
 def _cell_class(r: dict) -> str:
-    if r["passed"]:
+    """Coloured by the share of expected URLs captured; overcrawling is shown as +N but doesn't change it."""
+    captured, expected = _captured(r)
+    if captured == expected:
         return "passes-all"
-    if r["hits"] == 0:
+    if captured == 0:
         return "passes-none"
-    rate = r["hits"] / r["total"]
-    return "passes-" + next(name for limit, name in PASS_BUCKETS if rate < limit)
+    return "passes-" + next(name for limit, name in PASS_BUCKETS if captured / expected < limit)
 
 
 STYLE = """
@@ -167,7 +179,7 @@ def scores_table(results: dict, extra_columns=None) -> str:
 </table></div>
 <p class="desc"><b>Captured</b>: URLs a case expects that were captured.
 <b>Overcrawled</b>: URLs captured that a case says shouldn't be (<code>expect_not</code>).
-<b>Accuracy</b>: expectations met, counting both. In the case table, +N is the number overcrawled.</p>
+<b>Accuracy</b>: expectations met, counting both. In the case table, each cell shows the expected URLs captured and is coloured by that share; +N is the number overcrawled.</p>
 {notes}"""
 
 
@@ -185,7 +197,7 @@ def cases_table(results: dict, case_link=lambda name: f"#{name}", cell_link=None
             else:
                 href = cell_link(name, c) if cell_link else case_link(name)
                 over = f'<span class="over">+{r["overcrawled"]}</span>' if r["overcrawled"] else ""
-                cells.append(f'<td class="rate {_cell_class(r)}"><a href="{_e(href)}">{r["hits"]}/{r["total"]}</a>'
+                cells.append(f'<td class="rate {_cell_class(r)}"><a href="{_e(href)}">{"%d/%d" % _captured(r)}</a>'
                              f'{over}</td>')
         tags = " ".join(f'<span class="tag">{_e(t)}</span>' for t in case["tags"])
         rows.append(f'<tr><th scope="row"><a href="{_e(case_link(name))}">{_e(name)}</a> {tags}</th>'
