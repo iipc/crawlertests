@@ -32,7 +32,7 @@ class Browsertrix(Crawler):
             info["version"] = m.group(1)
         image = self.config.get("image", DEFAULT_IMAGE)
         out = subprocess.run([self.engine, "image", "inspect", image, "--format",
-                              '{{json .Labels}}\t{{json .RepoDigests}}'], capture_output=True, text=True)
+                              '{{json .Config.Labels}}\t{{json .RepoDigests}}'], capture_output=True, text=True)
         if out.returncode == 0:
             labels, digests = (json.loads(part) for part in out.stdout.strip().split("\t", 1))
             labels = labels or {}
