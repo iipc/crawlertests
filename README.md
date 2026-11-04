@@ -52,18 +52,28 @@ uv run crawlertests save runs/20261103-201500 results/   # add a run's records t
 uv run crawlertests site results/ -o _site                # build the website from a history
 ```
 
-`save` skips a crawler whose version and suite version match a saved run.
 The website shows the latest result for each crawler, the score over time,
 each case's history, and a comparison of any two runs. Saved runs are
-re-scored against the current expectations, but a run only has captures for
-the cases that existed when it was crawled, and its captures reflect the
-fixtures as they were then. So the chart scores every point on the cases all
-the plotted runs share, and when a crawler version is re-crawled its new run
-replaces the old one.
+re-scored against the current expectations, but a run's captures only cover
+the cases it crawled, as their fixtures were then. So each record also holds a
+hash of each case's fixture files and the harness version
+(`HARNESS_VERSION` in `history.py`). A crawler version's result takes each
+case from its latest run with the current fixtures; a case whose fixtures
+changed since doesn't count until that version is re-crawled for it, and the
+chart scores every point on the cases all the plotted runs share. `save`
+skips a run whose crawler version, harness version and case fixtures all match
+a saved run.
+
+Re-crawling an old version only needs its stale cases:
 
 ```sh
-uv run crawlertests stale results/   # saved releases that predate the current cases or harness
+uv run crawlertests stale results/            # saved releases with new, changed or (after a harness bump) all cases
+uv run crawlertests run -c heritrix name:html-anchors name:css-urls   # crawl exact cases
 ```
+
+Bump `HARNESS_VERSION` only when a harness change alters what crawlers are
+served or how captures are read: it makes every case of every saved version
+stale.
 
 On GitHub, the `crawl` workflow runs nightly: the latest releases of Heritrix,
 Browsertrix Crawler, Zeno and StormCrawler ("release" track), Heritrix built
@@ -71,11 +81,12 @@ from its default branch ("dev" track), and the latest Heritrix release with
 Penumbra from its default branch (`heritrix-penumbra`'s "dev" track, whose
 revision and date are Penumbra's). It saves new records to the `results` branch and
 rebuilds the site on GitHub Pages; the `site` workflow also rebuilds it when
-the cases change. The nightly run also re-crawls any saved release that
-`stale` lists, so after the cases change every version on the chart catches up
-within a night. Run `crawl` by hand with `heritrix_release`,
-`browsertrix_tag`, `zeno_release` or `stormcrawler_release` to backfill older versions, or with `recrawl` to re-crawl the
-stale versions now.
+the cases change. The nightly run also re-crawls the stale cases of up to 8
+saved releases (newest first), so after the cases change older versions catch
+up over a night or a few. Run `crawl` by hand with `heritrix_release`,
+`browsertrix_tag`, `zeno_release` or `stormcrawler_release` to backfill older
+versions, or with `recrawl` (and `budget = 0` for no limit) to re-crawl stale
+cases now.
 
 ## Writing a case
 

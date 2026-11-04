@@ -16,7 +16,7 @@ from pathlib import Path
 
 from .cases import Case
 from .compare import crawler_scores
-from .history import current_records, load_records, results_for, score_record
+from .history import CaseHashes, load_records, merge_builds, results_for, score_record
 from .report import STYLE, _cell_class, _e, _ratio, case_details, cases_table, page, scores_table
 
 SOURCE = "https://github.com/iipc/crawlertests"
@@ -88,15 +88,25 @@ def record_date(record: dict) -> datetime:
     return datetime.fromtimestamp(0, timezone.utc)
 
 
-def build_site(results_dir: Path, cases: dict[str, Case], out: Path):
-    records = current_records([r for r in load_records(results_dir) if r["status"] == "ok"])
+def build_site(results_dir: Path, cases: dict[str, Case], out: Path, repo: Path | None = None):
+    """repo: the suite's git checkout, to find the fixture hashes of records saved before they were recorded."""
+    all_records = [r for r in load_records(results_dir) if r["status"] == "ok"]
     out.mkdir(parents=True, exist_ok=True)
     (out / "site.css").write_text(STYLE + SITE_STYLE)
 
-    scored = {}
-    for r in records:
-        case_results = score_record(r, cases)
-        scored[(r["run"], r["crawler"])] = (case_results, crawler_scores(list(case_results.values())))
+    # one entry per crawler build, each case taken from the build's latest run with the current fixtures
+    run_scores = {}
+    records, scored = [], {}
+    for latest, sources in merge_builds(all_records, CaseHashes(cases, repo)):
+        case_results = {}
+        for name, source in sources.items():
+            key = (source["run"], source["crawler"])
+            if key not in run_scores:
+                run_scores[key] = score_record(source, cases)
+            case_results[name] = run_scores[key][name]
+        case_results = {name: case_results[name] for name in cases if name in case_results}
+        records.append(latest)
+        scored[(latest["run"], latest["crawler"])] = (case_results, crawler_scores(list(case_results.values())))
 
     series = defaultdict(list)
     for r in records:
@@ -110,7 +120,7 @@ def build_site(results_dir: Path, cases: dict[str, Case], out: Path):
     for slug in slugs:
         _write_history(out, slug, series[slug], cases, scored)
     by_run = defaultdict(list)
-    for r in records:
+    for r in all_records:
         by_run[r["run"]].append(r)
     for run, rs in by_run.items():
         results = results_for([(series_label(r), r) for r in rs], cases, run)

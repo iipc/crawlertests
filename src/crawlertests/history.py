@@ -6,10 +6,19 @@ and suite versions. It doesn't hold pass/fail results: those are computed by
 scoring the record against the current cases, so old runs can be re-scored as
 cases and expectations change.
 
+A record also holds a hash of each crawled case's fixture files and the
+harness version. A case's results stay valid until its fixtures change (or the
+harness version is bumped), so after a change only the affected cases need
+re-crawling, and a crawler version's results combine, case by case, the latest
+runs whose fixtures match the current ones.
+
 Records are stored as <results>/runs/<run>/<crawler>.json.
 """
 
+import hashlib
 import json
+import subprocess
+from collections import defaultdict
 from pathlib import Path
 
 from .cases import Case
@@ -17,6 +26,10 @@ from .compare import crawler_scores, score_case
 from .warcs import Capture
 
 FORMAT = 1
+
+# Bump when a harness change alters what crawlers are served or how captures are read, so every case of every
+# saved version is re-crawled. Changes to fixtures need no bump: they're tracked per case by case_hash().
+HARNESS_VERSION = 1
 
 
 def make_record(meta: dict, name: str, captured: dict[str, list[Capture]], requested: set[str]) -> dict:
@@ -37,6 +50,8 @@ def make_record(meta: dict, name: str, captured: dict[str, list[Capture]], reque
         "message": info.get("message"),
         "duration": info.get("duration"),
         "cases": meta["cases"],
+        "harness": meta.get("harness"),
+        "case_hashes": meta.get("case_hashes"),
         "captures": [list(t) for t in captures],
         "requested": sorted(requested),
     }
@@ -97,10 +112,19 @@ def load_records(results_dir: Path) -> list[dict]:
     return records
 
 
+def record_harness(record: dict) -> int:
+    """The harness version a record was made with; records from before it was recorded are version 1."""
+    harness = record.get("harness")
+    return 1 if harness is None else harness
+
+
 def fingerprint(record: dict) -> tuple:
-    """What makes a run worth keeping: a different crawler version, suite version or case list."""
+    """What makes a run worth keeping: a different crawler version, harness version, or set of case fixtures.
+    (Records from before case hashes were recorded fall back to the suite revision.)"""
+    fixtures = (tuple(sorted(record["case_hashes"].items())) if record.get("case_hashes")
+                else (record.get("suite", {}).get("revision"), tuple(record["cases"])))
     return (record["crawler"], record.get("track"), json.dumps(record.get("version"), sort_keys=True),
-            record.get("suite", {}).get("revision"), tuple(record["cases"]))
+            record_harness(record), fixtures)
 
 
 def save_run(run_dir: Path, results_dir: Path, force: bool = False) -> list[Path]:
@@ -127,15 +151,81 @@ def version_key(record: dict) -> tuple:
     return record["crawler"], record.get("track"), v.get("version"), v.get("revision")
 
 
-def current_records(records: list[dict]) -> list[dict]:
-    """The latest record of each crawler build, so a build re-crawled after the cases changed replaces its
-    earlier record instead of appearing twice."""
-    latest = {}
+def _blob_id(data: bytes) -> str:
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def _hash_listing(entries: list[tuple[str, str]]) -> str:
+    listing = "".join(f"{path} {blob}\n" for path, blob in sorted(entries) if not path.split("/")[-1].startswith("."))
+    return hashlib.sha256(listing.encode()).hexdigest()[:16]
+
+
+def case_hash(case_dir: Path) -> str:
+    """A hash of a case's fixture files: their paths and git blob ids, so it can also be computed for any past
+    commit from git alone (CaseHashes.at)."""
+    return _hash_listing([(p.relative_to(case_dir).as_posix(), _blob_id(p.read_bytes()))
+                          for p in case_dir.rglob("*") if p.is_file()])
+
+
+class CaseHashes:
+    """Case fixture hashes, now and as of past commits, for records saved before hashes were recorded."""
+
+    def __init__(self, cases: dict[str, Case], repo: Path | None = None):
+        self.current = {name: case_hash(case.dir) for name, case in cases.items()}
+        self.repo = repo
+        self._at: dict[str, dict[str, str]] = {}
+
+    def at(self, revision: str | None) -> dict[str, str]:
+        if not revision or self.repo is None:
+            return {}
+        if revision not in self._at:
+            out = subprocess.run(["git", "-C", str(self.repo), "ls-tree", "-r", revision, "--", "cases"],
+                                 capture_output=True, text=True)
+            files: dict[str, list] = {}
+            for line in out.stdout.splitlines() if out.returncode == 0 else []:
+                meta, path = line.split("\t", 1)
+                parts = path.split("/", 2)
+                if len(parts) == 3:
+                    files.setdefault(parts[1], []).append((parts[2], meta.split()[2]))
+            self._at[revision] = {name: _hash_listing(entries) for name, entries in files.items()}
+        return self._at[revision]
+
+    def of(self, record: dict) -> dict[str, str]:
+        """The fixture hash of each case the record crawled (empty where unknown)."""
+        return record.get("case_hashes") or self.at((record.get("suite") or {}).get("revision"))
+
+    def fresh(self, record: dict, case: str) -> bool:
+        """Whether the record's results for a case are still valid: same harness and same fixtures. A case
+        whose old hash can't be determined counts as fresh."""
+        if record_harness(record) != HARNESS_VERSION:
+            return False
+        old = self.of(record).get(case)
+        return old is None or old == self.current.get(case)
+
+
+def version_key(record: dict) -> tuple:
+    """Identifies a crawler build: re-crawls of the same build share this key."""
+    v = record.get("version") or {}
+    return record["crawler"], record.get("track"), v.get("version"), v.get("revision")
+
+
+def merge_builds(records: list[dict], hashes: CaseHashes) -> list[tuple[dict, dict[str, dict]]]:
+    """Combine each crawler build's runs case by case: for every current case, the latest run of the build that
+    crawled it with the current fixtures. Returns (latest record, {case: record it's taken from}) per build;
+    cases with no fresh run are left out, so they count as not run until re-crawled."""
+    builds = defaultdict(list)
     for record in records:
-        key = version_key(record)
-        if key not in latest or (record.get("time") or "") >= (latest[key].get("time") or ""):
-            latest[key] = record
-    return list(latest.values())
+        builds[version_key(record)].append(record)
+    merged = []
+    for runs in builds.values():
+        runs.sort(key=lambda r: r.get("time") or "")
+        sources = {}
+        for record in runs:  # later runs override earlier ones
+            for case in record["cases"]:
+                if case in hashes.current and hashes.fresh(record, case):
+                    sources[case] = record
+        merged.append((runs[-1], sources))
+    return merged
 
 
 # Java for each Heritrix release line: 3.4.x needs 11, up to 3.13 needs 17.
@@ -145,24 +235,35 @@ def heritrix_java(version: str) -> str:
     return "11" if minor <= 4 else "17" if minor <= 13 else "21"
 
 
-def stale_versions(records: list[dict], suite_revision: str | None, case_names: list[str]) -> list[dict]:
-    """Released crawler versions whose latest saved run predates the current cases or harness, as crawl workflow
-    matrix entries ({"job", "version", "java"}). Development builds aren't included: the nightly run replaces
+def stale_versions(records: list[dict], hashes: CaseHashes) -> list[dict]:
+    """Released crawler versions with cases that need re-crawling (new cases, changed fixtures, or a harness
+    version bump), newest versions first, as crawl workflow matrix entries {"job", "version", "java", "cases"}
+    ("cases" is empty when every case is needed). Development builds aren't included: the nightly run replaces
     them with the current build anyway."""
     entries = {}
-    for record in current_records(records):
-        if record.get("track") != "release" or not (record.get("version") or {}).get("version"):
+    for latest, sources in merge_builds(records, hashes):
+        version = (latest.get("version") or {}).get("version")
+        if latest.get("track") != "release" or not version:
             continue
-        fresh = (record.get("suite") or {}).get("revision") == suite_revision and set(case_names) <= set(record["cases"])
-        if fresh:
+        stale = set(hashes.current) - set(sources)
+        if not stale:
             continue
-        version = record["version"]["version"]
-        kind = record.get("type", "")
+        kind = latest.get("type", "")
         if kind in ("heritrix", "heritrix-browser"):
-            entries[("heritrix-release", version)] = {"job": "heritrix-release", "version": version,
-                                                      "java": heritrix_java(version)}
+            job, java = "heritrix-release", heritrix_java(version)
         elif kind in ("browsertrix", "zeno"):
-            entries[(kind, version)] = {"job": kind, "version": version, "java": ""}
+            job, java = kind, ""
         elif kind == "stormcrawler":
-            entries[(kind, version)] = {"job": kind, "version": version, "java": "21"}
-    return sorted(entries.values(), key=lambda e: (e["job"], e["version"]))
+            job, java = kind, "21"
+        else:
+            continue
+        entry = entries.setdefault((job, version), {"job": job, "version": version, "java": java, "_stale": set(),
+                                                     "_date": (latest.get("version") or {}).get("date") or ""})
+        entry["_stale"] |= stale
+    result = []
+    for entry in sorted(entries.values(), key=lambda e: (e["_date"], e["job"], e["version"]), reverse=True):
+        stale = entry.pop("_stale")
+        entry.pop("_date")
+        entry["cases"] = "" if stale == set(hashes.current) else " ".join(sorted(stale))
+        result.append(entry)
+    return result

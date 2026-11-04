@@ -23,7 +23,8 @@ from pathlib import Path
 from .cases import load_cases
 from .compare import captured_keys, requested_keys
 from .crawlers import CrawlError, make_crawler
-from .history import load_records, make_record, results_for, save_run, stale_versions, write_record
+from .history import (HARNESS_VERSION, CaseHashes, case_hash, load_records, make_record, results_for, save_run,
+                      stale_versions, write_record)
 from .report import text_summary, write_html, write_json
 from .server import FixtureServer, dump_log
 from .urls import OTHER
@@ -112,12 +113,11 @@ def main(argv=None):
         for path in save_run(args.run_dir, args.results_dir, args.force):
             print(f"saved {path}")
     elif args.command == "stale":
-        suite = suite_version(args.cases_dir)
-        print(json.dumps(stale_versions(load_records(args.results_dir), suite.get("revision"),
-                                        list(load_cases(args.cases_dir)))))
+        hashes = CaseHashes(load_cases(args.cases_dir), repo_root(args.cases_dir))
+        print(json.dumps(stale_versions(load_records(args.results_dir), hashes)))
     elif args.command == "site":
         from .site import build_site
-        build_site(args.results_dir, load_cases(args.cases_dir), args.output)
+        build_site(args.results_dir, load_cases(args.cases_dir), args.output, repo_root(args.cases_dir))
         print(f"site: {args.output / 'index.html'}")
 
 
@@ -160,7 +160,8 @@ def run(args, config) -> int:
     meta = {"run": run_dir.name, "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "suite": suite_version(args.cases_dir), "platform": f"{platform.system().lower()}-{platform.machine()}",
             "origins": {str(port): marker for port, marker in server.origins.items()},
-            "cases": list(cases), "crawlers": {}}
+            "cases": list(cases), "harness": HARNESS_VERSION,
+            "case_hashes": {name: case_hash(case.dir) for name, case in cases.items()}, "crawlers": {}}
     try:
         for crawler in crawlers:
             meta["crawlers"][crawler.name] = run_crawler(crawler, cases, server, run_dir)
@@ -174,6 +175,11 @@ def run(args, config) -> int:
 
 # What a crawl's results depend on: the fixtures and the harness, but not the report or website code.
 SUITE_PATHS = ["cases", "src", ":!src/crawlertests/report.py", ":!src/crawlertests/site.py"]
+
+
+def repo_root(cases_dir: Path) -> Path | None:
+    out = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=cases_dir, capture_output=True, text=True)
+    return Path(out.stdout.strip()) if out.returncode == 0 else None
 
 
 def suite_version(cases_dir: Path) -> dict:

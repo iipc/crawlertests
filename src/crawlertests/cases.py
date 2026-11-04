@@ -139,7 +139,7 @@ def load_case(dir: Path) -> Case:
 
 
 def load_cases(cases_dir: Path, selectors: list[str] | None = None) -> dict[str, Case]:
-    """Load all cases, optionally filtered by name substring or "tag:<tag>" selectors."""
+    """Load all cases, optionally filtered by name substring, "name:<exact name>" or "tag:<tag>" selectors."""
     cases = {}
     for dir in sorted(cases_dir.iterdir()):
         if not (dir / "case.toml").exists():
@@ -154,4 +154,6 @@ def load_cases(cases_dir: Path, selectors: list[str] | None = None) -> dict[str,
 def _matches(case: Case, selector: str) -> bool:
     if selector.startswith("tag:"):
         return selector[4:] in case.tags
+    if selector.startswith("name:"):
+        return selector[5:] == case.name
     return selector in case.name

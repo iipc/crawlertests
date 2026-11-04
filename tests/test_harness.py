@@ -362,27 +362,50 @@ def test_records_saving_and_site(tmp_path):
     assert json.loads((tmp_path / "site" / "data" / "index.json").read_text())[0]["id"] == "r1/perfect"
 
 
-def test_stale_versions_and_current_records():
-    from crawlertests.history import current_records, heritrix_java, stale_versions
+def test_case_hashes_merging_and_stale_cases(tmp_path):
+    from crawlertests.history import HARNESS_VERSION, CaseHashes, case_hash, heritrix_java, merge_builds, \
+        stale_versions
 
-    def record(crawler, type, version, suite, cases, time, track="release"):
-        return {"crawler": crawler, "type": type, "track": track, "version": {"version": version},
-                "suite": {"revision": suite}, "cases": cases, "time": time}
+    for name in ("a", "b"):
+        (tmp_path / name).mkdir()
+        (tmp_path / name / "case.toml").write_text(f'expect = ["{name}.png"]\n')
+        (tmp_path / name / "index.html").write_text(f'<img src="{name}.png">\n')
+    cases = load_cases(tmp_path)
+    hashes = CaseHashes(cases)
+    original = dict(hashes.current)
 
-    old = record("heritrix", "heritrix", "3.10.0", "s1", ["a"], "2026-01-01")
-    recrawled = record("heritrix", "heritrix", "3.10.0", "s2", ["a", "b"], "2026-02-01")
-    stale = [record("heritrix-browser", "heritrix-browser", "3.13.0", "s1", ["a", "b"], "2026-01-01"),
-             record("browsertrix", "browsertrix", "1.0.4", "s2", ["a"], "2026-01-01"),
-             record("heritrix", "heritrix", "3.19.0-SNAPSHOT", "s1", ["a"], "2026-01-01", track="dev"),
-             record("heritrix-penumbra", "heritrix-penumbra", "3.18.0", "s1", ["a"], "2026-01-01", track="dev"),
-             record("zeno", "zeno", "2.0.27", "s1", ["a", "b"], "2026-01-01"),
-             record("stormcrawler", "stormcrawler", "3.6.0", "s1", ["a", "b"], "2026-01-01")]
-    assert current_records([old, recrawled]) == [recrawled]
-    assert stale_versions([old, recrawled, *stale], "s2", ["a", "b"]) == [
-        {"job": "browsertrix", "version": "1.0.4", "java": ""},  # missing a case
-        {"job": "heritrix-release", "version": "3.13.0", "java": "17"},  # older suite
-        {"job": "stormcrawler", "version": "3.6.0", "java": "21"},
-        {"job": "zeno", "version": "2.0.27", "java": ""},
-    ]
+    def record(run, crawled, time, version="3.10.0", case_hashes=None, harness=HARNESS_VERSION):
+        return {"run": run, "crawler": "heritrix", "type": "heritrix", "track": "release",
+                "version": {"version": version, "date": f"2025-0{version[2]}-01"}, "cases": crawled,
+                "time": time, "harness": harness,
+                "case_hashes": case_hashes if case_hashes is not None else {c: original[c] for c in crawled}}
+
+    full = record("r1", ["a", "b"], "2026-01-01")
+    assert stale_versions([full], hashes) == []
+
+    (tmp_path / "b" / "index.html").write_text('<img src="b2.png">\n')  # edit one case's fixtures
+    hashes = CaseHashes(load_cases(tmp_path))
+    assert hashes.current["a"] == original["a"] and hashes.current["b"] != original["b"]
+    assert case_hash(tmp_path / "b") == hashes.current["b"]
+    assert stale_versions([full], hashes) == [{"job": "heritrix-release", "version": "3.10.0", "java": "17",
+                                               "cases": "b"}]
+    [(latest, sources)] = merge_builds([full], hashes)
+    assert set(sources) == {"a"}  # the stale case doesn't count until re-crawled
+
+    partial = record("r2", ["b"], "2026-02-01", case_hashes={"b": hashes.current["b"]})
+    [(latest, sources)] = merge_builds([full, partial], hashes)
+    assert latest is partial and sources == {"a": full, "b": partial}
+    assert stale_versions([full, partial], hashes) == []
+
+    # a harness version bump makes every case stale; newer versions come first
+    old_harness = record("r3", ["a", "b"], "2026-01-01", version="3.13.0", harness=HARNESS_VERSION - 1,
+                         case_hashes=hashes.current)
+    assert stale_versions([full, partial, old_harness], hashes) == [
+        {"job": "heritrix-release", "version": "3.13.0", "java": "17", "cases": ""}]
+    # without recorded hashes or a repo to look them up in, a record's cases count as fresh
+    unknown = record("r4", ["a", "b"], "2026-01-01", version="3.16.0", case_hashes={})
+    assert set(merge_builds([unknown], hashes)[0][1]) == {"a", "b"}
+
     assert [heritrix_java(v) for v in ("3.4.0-20210803", "3.5.0", "3.13.0", "3.14.1", "3.18.0")] == \
         ["11", "17", "17", "21", "21"]
+    assert list(load_cases(tmp_path, ["name:a"])) == ["a"]

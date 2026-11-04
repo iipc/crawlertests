@@ -27,6 +27,7 @@ jobs:
         with:
           # the latest tests and site code, even when called from a crawl that started on an older commit
           ref: main
+          fetch-depth: 0  # to find the fixtures of runs saved before case hashes were recorded
 
       - uses: astral-sh/setup-uv@v10.3.0
 

@@ -3,14 +3,17 @@
 # Nightly, each crawler runs in its "release" track (the latest release) and
 # Heritrix also in its "dev" track (built from its default branch). Heritrix
 # with Penumbra is a "dev" track of its own: the latest Heritrix release with
-# Penumbra from its default branch (Penumbra has no releases). Saved older
-# releases whose results predate the current cases or harness are re-crawled
-# too, so every version on the chart covers the same cases. A run is only saved
-# when the crawler or the test suite has changed since a saved run of that
-# crawler version, so the history is a record of versions rather than of nights.
+# Penumbra from its default branch (Penumbra has no releases).
+#
+# Saved older releases are re-crawled only for their stale cases: new cases,
+# cases whose fixtures changed, or every case after a HARNESS_VERSION bump. At
+# most `budget` versions a night, newest first, so a big change catches up over
+# a few nights. A run is only saved when the crawler, harness or fixtures differ
+# from a saved run of that crawler version, so the history is a record of
+# versions rather than of nights.
 #
 # Run it by hand to backfill an older release, e.g. heritrix_release = 3.10.0,
-# or with recrawl to re-crawl only the out-of-date saved versions.
+# or with recrawl to re-crawl only stale cases now.
 
 name: crawl
 
@@ -38,9 +41,12 @@ on:
         description: Run only heritrix-release, heritrix-dev, heritrix-penumbra, browsertrix, zeno or stormcrawler (default all)
         default: ""
       recrawl:
-        description: Only re-crawl saved releases whose results predate the current cases or harness
+        description: Only re-crawl the stale cases of saved releases (new or changed cases, or a harness version bump)
         type: boolean
         default: false
+      budget:
+        description: Most saved versions to re-crawl stale cases for (0 for no limit)
+        default: "8"
       force:
         description: Save even if nothing changed since the last saved run
         type: boolean
@@ -82,6 +88,7 @@ jobs:
           JAVA: ${{ inputs.java }}
           ONLY: ${{ inputs.only }}
           RECRAWL: ${{ inputs.recrawl }}
+          BUDGET: ${{ inputs.budget }}
         run: |
           matrix=$(uv run python .github/scripts/plan-crawl.py)
           echo "$matrix" | python3 -m json.tool
@@ -98,6 +105,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
+      CASES: ${{ matrix.cases }}
       RUN_NAME: ${{ github.run_id }}-${{ matrix.job }}${{ matrix.version && format('-{0}', matrix.version) || '' }}
     steps:
       - uses: actions/checkout@v7
@@ -237,6 +245,7 @@ jobs:
         run: |
           args=()
           for c in $CRAWLERS; do args+=(-c "$c"); done
+          for c in $CASES; do args+=("name:$c"); done  # only the stale cases, for a re-crawl
           uv run crawlertests run -o "run/$RUN_NAME" "${args[@]}"
 
       - uses: actions/upload-artifact@v7
