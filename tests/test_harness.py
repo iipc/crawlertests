@@ -274,6 +274,49 @@ def test_heritrix_extractor_js_config():
             '  <property name="strict" value="true" />') in cxml
 
 
+@pytest.mark.skipif(not HERITRIX_PROFILE.exists(), reason="no Heritrix checkout")
+def test_heritrix_penumbra_config():
+    from crawlertests.crawlers.penumbra import HeritrixPenumbra
+    crawler = HeritrixPenumbra("p", {"profile": str(HERITRIX_PROFILE)})
+    crawler.amqp_port = 5999
+    cxml = crawler.build_config(["http://127.0.0.1:1234/cases/a/"])
+    xml.dom.minidom.parseString(cxml)
+    assert "crawlController.runWhileEmpty=true" in cxml
+    assert '<ref bean="amqpPublishProcessor"/>' in cxml
+    assert 'value="amqp://guest:guest@127.0.0.1:5999/%2f"' in cxml
+    assert 'class="org.archive.crawler.frontier.AMQPUrlReceiver"' in cxml
+
+
+def test_zeno_command():
+    import re
+    from crawlertests.crawlers.zeno import Zeno
+    crawler = Zeno("z", {"binary": "/bin/sh", "extra_args": ["--tui"]})
+    seeds = ["http://localhost.:1234/cases/a-b/", "https://localhost.:1235/cases/c/"]
+    cmd = crawler.command(seeds)
+    assert crawler.seed_host() == "localhost."
+    assert cmd[-2:] == seeds and "--tui" in cmd and cmd[cmd.index("--max-hops") + 1] == "0"
+    patterns = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "--domains-crawl"]
+    assert len(patterns) == 2
+    # Go and Python regexps agree on these
+    assert re.match(patterns[0], "http://localhost.:1234/cases/a-b/page.html")
+    assert not re.match(patterns[0], "http://localhost.:1234/cases/a-bc/")
+    assert not re.match(patterns[0], "http://localhostx:1234/cases/a-b/")
+
+
+def test_stormcrawler_config(tmp_path):
+    from crawlertests.crawlers.stormcrawler import StormCrawler
+    crawler = StormCrawler("s", {"conf": {"fetcher.threads.number": 2}})
+    crawler.write_config(["http://127.0.0.1:1234/cases/a/"], tmp_path)
+    scope = (tmp_path / "crawlertests-scope.txt").read_text().splitlines()
+    assert scope == ["-^(file|ftp|mailto):", r"+^\Qhttp://127.0.0.1:1234/cases/a/\E", "-."]
+    conf = json.loads((tmp_path / "crawlertests-conf.json").read_text())["config"]
+    assert conf["fetcher.threads.number"] == 2 and conf["http.content.limit"] == -1
+    filters = json.loads((tmp_path / "crawlertests-urlfilters.json").read_text())
+    assert "SitemapFilter" not in json.dumps(filters)
+    links = json.loads((tmp_path / "crawlertests-jsoupfilters.json").read_text())
+    assert "//IMG/@src" in json.dumps(links)
+
+
 def test_records_saving_and_site(tmp_path):
     from crawlertests.history import load_records, make_record, save_run, score_record, write_record
     from crawlertests.site import build_site
@@ -330,11 +373,16 @@ def test_stale_versions_and_current_records():
     recrawled = record("heritrix", "heritrix", "3.10.0", "s2", ["a", "b"], "2026-02-01")
     stale = [record("heritrix-browser", "heritrix-browser", "3.13.0", "s1", ["a", "b"], "2026-01-01"),
              record("browsertrix", "browsertrix", "1.0.4", "s2", ["a"], "2026-01-01"),
-             record("heritrix", "heritrix", "3.19.0-SNAPSHOT", "s1", ["a"], "2026-01-01", track="dev")]
+             record("heritrix", "heritrix", "3.19.0-SNAPSHOT", "s1", ["a"], "2026-01-01", track="dev"),
+             record("heritrix-penumbra", "heritrix-penumbra", "3.18.0", "s1", ["a"], "2026-01-01", track="dev"),
+             record("zeno", "zeno", "2.0.27", "s1", ["a", "b"], "2026-01-01"),
+             record("stormcrawler", "stormcrawler", "3.6.0", "s1", ["a", "b"], "2026-01-01")]
     assert current_records([old, recrawled]) == [recrawled]
     assert stale_versions([old, recrawled, *stale], "s2", ["a", "b"]) == [
         {"job": "browsertrix", "version": "1.0.4", "java": ""},  # missing a case
         {"job": "heritrix-release", "version": "3.13.0", "java": "17"},  # older suite
+        {"job": "stormcrawler", "version": "3.6.0", "java": "21"},
+        {"job": "zeno", "version": "2.0.27", "java": ""},
     ]
     assert [heritrix_java(v) for v in ("3.4.0-20210803", "3.5.0", "3.13.0", "3.14.1", "3.18.0")] == \
         ["11", "17", "17", "21", "21"]

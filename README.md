@@ -13,7 +13,10 @@ Crawlers supported so far:
 | `heritrix`         | Heritrix with its standard extractors (FetchHTTP)           |
 | `heritrix-strict-js` | Heritrix with ConfigurableExtractorJS in strict mode (only absolute URLs from JavaScript) |
 | `heritrix-browser` | Heritrix with FetchHTTP2 and the BrowserProcessor (Firefox or Chrome over WebDriver BiDi) |
+| `heritrix-penumbra` | Heritrix sending pages over AMQP to Penumbra, which renders them in Chromium |
 | `browsertrix`      | Browsertrix Crawler in a podman or docker container         |
+| `zeno`             | Zeno, the Internet Archive's Go crawler                     |
+| `stormcrawler`     | Apache StormCrawler with its WARC module, as a local-mode Storm topology |
 
 ## Quick start
 
@@ -62,14 +65,16 @@ replaces the old one.
 uv run crawlertests stale results/   # saved releases that predate the current cases or harness
 ```
 
-On GitHub, the `crawl` workflow runs nightly: the latest releases of Heritrix
-and Browsertrix Crawler ("release" track) and Heritrix built from its default
-branch ("dev" track). It saves new records to the `results` branch and
+On GitHub, the `crawl` workflow runs nightly: the latest releases of Heritrix,
+Browsertrix Crawler, Zeno and StormCrawler ("release" track), Heritrix built
+from its default branch ("dev" track), and the latest Heritrix release with
+Penumbra from its default branch (`heritrix-penumbra`'s "dev" track, whose
+revision and date are Penumbra's). It saves new records to the `results` branch and
 rebuilds the site on GitHub Pages; the `site` workflow also rebuilds it when
 the cases change. The nightly run also re-crawls any saved release that
 `stale` lists, so after the cases change every version on the chart catches up
-within a night. Run `crawl` by hand with `heritrix_release` or
-`browsertrix_tag` to backfill older versions, or with `recrawl` to re-crawl the
+within a night. Run `crawl` by hand with `heritrix_release`,
+`browsertrix_tag`, `zeno_release` or `stormcrawler_release` to backfill older versions, or with `recrawl` to re-crawl the
 stale versions now.
 
 ## Writing a case
@@ -211,6 +216,52 @@ same way as script files. Any crawler of type `heritrix` can set
 extractors. The harness passes the fixture certificate to the JVM with
 `-Djavax.net.ssl.trustStore`, since FetchHTTP2 (unlike FetchHTTP) verifies
 certificates.
+
+**Heritrix + Penumbra.** The `heritrix` configuration plus the AMQP beans
+from [Penumbra](https://github.com/internetarchive/penumbra)'s sample job:
+`AMQPPublishProcessor` at the end of the fetch chain sends HTML pages reached
+by links to Penumbra, which loads each in headless Chromium and publishes
+every URL the page requested; `AMQPUrlReceiver` schedules them. The harness
+starts RabbitMQ in a container, runs Penumbra from git with `uv tool run`
+(it has no releases; `penumbra_ref` picks the branch or commit), and adds
+the `heritrix-contrib` jar (from Maven Central, or `contrib_jar`) and the
+RabbitMQ client to an overlay of the Heritrix home. Penumbra's Chromium is
+launched through a wrapper script that adds `--ignore-certificate-errors`.
+Heritrix runs with `runWhileEmpty`, and the harness terminates the job once
+Heritrix is empty and both queues have no ready or unacknowledged messages:
+the contrib `AMQPUrlWaiter` instead stops at a statistics snapshot (every
+20s) once anything has come back, even with pages still out.
+
+**Zeno.** Runs `Zeno get url` with every seed, `--max-hops 0`, and a
+`--domains-crawl` regex per seed prefix: outlinks that match are crawled at
+hop 0, so the scope is the seed prefixes, while assets are fetched from any
+origin. Zeno stops by itself when its queue is empty. It doesn't validate
+certificates by default and doesn't fetch robots.txt at all. It refuses to
+crawl `localhost`, `127.0.0.1` or any hostname without a dot, so its seeds
+use `localhost.` (with the trailing dot). Release binaries are only built for
+Linux and Windows; on macOS `go install github.com/internetarchive/Zeno/v2@latest`
+(with Xcode's command line tools, setting `CGO_CXXFLAGS="-isysroot $(xcrun
+--show-sdk-path) -I$(xcrun --show-sdk-path)/usr/include/c++/v1"` if the C++
+headers aren't found).
+
+**StormCrawler.** A library rather than a crawler you download, so the harness
+has a small Maven project (`src/crawlertests/crawlers/stormcrawler/`) that
+builds a topology against the released StormCrawler artifacts of
+`stormcrawler_version`: the archetype's fetcher, sitemap, feed, jsoup and
+Tika bolts, with `WARCHdfsBolt` on the fetcher's output, run in a Storm
+`LocalCluster`. An in-memory queue replaces URLFrontier; it fetches each URL
+once and ends the crawl when nothing is queued and every tuple is acked. The
+archetype's configuration is changed for archiving: a prefix regex filter per
+seed in place of its URL filter (which skips images, CSS and JS), no
+`SitemapFilter` (which ignores links on a host whose robots.txt lists
+sitemaps, and all the cases share a robots.txt), no content limit, no
+refetching, zero politeness delays, and a `LinkParseFilter` for embedded
+resources (`img`, `script`, `link`, `iframe`, `source`, … — set `embeds` to
+false for just the archetype's frames), since the jsoup parser only follows
+`a[href]`. StormCrawler doesn't distinguish embeds from links, so nothing
+outside the seed prefixes is fetched. robots.txt is obeyed, and okhttp trusts
+any certificate. Only 2xx responses reach the WARC bolt, so redirects and
+errors aren't archived; nor is robots.txt.
 
 **Browsertrix.** Runs `browsertrix-crawler crawl --scopeType prefix
 --useRobots --useSitemap` with all case seeds (set `use_robots` or
