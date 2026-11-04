@@ -1,0 +1,5 @@
+title = "Long attribute values"
+description = "Attribute values longer than 2048 characters: an href made of 430 'p/../' segments before deep-target.html, so the URL resolves to a short one, and a style attribute with a background image followed by a long custom property. A crawler that truncates the href requests p/ or p instead (the segments cancel out wherever it is cut). Heritrix 3.13.0 stopped extracting values cut off at its 2048-character limit rather than requesting the truncated text."
+tags = ["html", "links", "precision"]
+expect = ["deep-target.html", "long-style.png", "after.html"]
+expect_not = ["p", "p/"]

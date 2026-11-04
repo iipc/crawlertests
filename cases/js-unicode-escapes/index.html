@@ -1,0 +1,19 @@
+<!doctype html>
+<title>Unicode escapes</title>
+<ul id="list"></ul>
+<script>
+  var urls = [
+    "{{ORIGIN}}/cases/js-unicode-escapes/cl\u0061ssic.html",
+    "{{ORIGIN}}/cases/js-unicode-escapes/\u{63}ode-point.html",
+    "{{ORIGIN}}/cases/js-unicode-escapes/code-point-dir\u{2f}page.html",
+    JSON.parse("{\u0022url\u0022:\u0022{{ORIGIN}}/cases/js-unicode-escapes/json-quoted.html\u0022}").url,
+  ];
+  for (var i = 0; i < urls.length; i++) {
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = urls[i];
+    a.textContent = "Link " + i;
+    li.appendChild(a);
+    document.getElementById("list").appendChild(li);
+  }
+</script>

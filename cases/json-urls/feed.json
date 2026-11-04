@@ -1,0 +1,13 @@
+{
+  "title": "Feed",
+  "type": "application/json",
+  "count": 3,
+  "url": "{{ORIGIN}}/cases/json-urls/absolute.html",
+  "image": "/cases/json-urls/root-relative.png",
+  "links": {"next": "relative.html", "meta": {"page": "in-object.html"}},
+  "items": [
+    "in-array.html",
+    {"href": "in-array-object.html"},
+    [["nested-array.html"]]
+  ]
+}
