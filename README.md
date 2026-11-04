@@ -17,7 +17,7 @@ Crawlers supported so far:
 | `browsertrix`      | Browsertrix Crawler in a podman or docker container         |
 | `zeno`             | Zeno, the Internet Archive's Go crawler                     |
 | `stormcrawler`     | Apache StormCrawler with its WARC module, as a local-mode Storm topology |
-| `ccnutch`          | Common Crawl's fork of Apache Nutch, set up as in cc-nutch-example, in a container |
+| `nutchcc`          | Common Crawl's fork of Apache Nutch, set up as in cc-nutch-example, in a container |
 
 ## Quick start
 
@@ -81,7 +81,7 @@ Browsertrix Crawler, Zeno and StormCrawler ("release" track), Heritrix built
 from its default branch ("dev" track), and the latest Heritrix release with
 Penumbra from its default branch (`heritrix-penumbra`'s "dev" track, whose
 revision and date are Penumbra's), and Common Crawl's Nutch fork built from its
-default branch (`ccnutch`'s "dev" track; the image is kept in the Actions cache). It saves new records to the `results` branch and
+default branch (`nutchcc`'s "dev" track; the image is kept in the Actions cache). It saves new records to the `results` branch and
 rebuilds the site on GitHub Pages; the `site` workflow also rebuilds it when
 the cases change. The nightly run also re-crawls the stale cases of up to 8
 saved releases (newest first), so after the cases change older versions catch
@@ -278,7 +278,7 @@ errors aren't archived; nor is robots.txt.
 
 **Common Crawl Nutch.** Common Crawl's fork of Nutch, as described by
 [cc-nutch-example](https://github.com/commoncrawl/cc-nutch-example). The fork
-has no releases, so the harness builds an image (`src/crawlertests/crawlers/ccnutch/Dockerfile`)
+has no releases, so the harness builds an image (`src/crawlertests/crawlers/nutchcc/Dockerfile`)
 following the example's steps: crawler-commons and the CLD2 language detector
 from source, then `ant runtime` of the fork's `cc` branch. Branches are resolved
 to commits before building, so the image is rebuilt only when one moves. The

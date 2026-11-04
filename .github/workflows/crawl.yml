@@ -40,7 +40,7 @@ on:
         description: StormCrawler release to run instead of the latest (e.g. 3.6.0)
         default: ""
       only:
-        description: Run only heritrix-release, heritrix-dev, heritrix-penumbra, browsertrix, zeno, stormcrawler or ccnutch (default all)
+        description: Run only heritrix-release, heritrix-dev, heritrix-penumbra, browsertrix, zeno, stormcrawler or nutchcc (default all)
         default: ""
       recrawl:
         description: Only re-crawl the stale cases of saved releases (new or changed cases, or a harness version bump)
@@ -180,30 +180,30 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Get Common Crawl Nutch sources
-        if: matrix.job == 'ccnutch'
-        id: ccnutch
+        if: matrix.job == 'nutchcc'
+        id: nutchcc
         run: |
           # the commits to build, resolved as the harness would, so the image cache follows them
           {
             echo "args<<EOF"
-            uv run python -c 'from crawlertests.crawlers.ccnutch import CCNutch
-          for k, v in CCNutch("ccnutch", {}).build_args().items(): print(f"{k}={v}")'
+            uv run python -c 'from crawlertests.crawlers.nutchcc import NutchCC
+          for k, v in NutchCC("nutchcc", {}).build_args().items(): print(f"{k}={v}")'
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v4
-        if: matrix.job == 'ccnutch'
+        if: matrix.job == 'nutchcc'
 
       - name: Build Common Crawl Nutch
-        if: matrix.job == 'ccnutch'
+        if: matrix.job == 'nutchcc'
         uses: docker/build-push-action@v7
         with:
-          context: src/crawlertests/crawlers/ccnutch
-          build-args: ${{ steps.ccnutch.outputs.args }}
-          tags: localhost/crawlertests-ccnutch:latest
+          context: src/crawlertests/crawlers/nutchcc
+          build-args: ${{ steps.nutchcc.outputs.args }}
+          tags: localhost/crawlertests-nutchcc:latest
           load: true
-          cache-from: type=gha,scope=ccnutch
-          cache-to: type=gha,scope=ccnutch,mode=max
+          cache-from: type=gha,scope=nutchcc
+          cache-to: type=gha,scope=nutchcc,mode=max
 
       - name: Configure
         env:
@@ -245,10 +245,10 @@ jobs:
               lines += ["[crawlers.stormcrawler]", 'track = "release"', version, "timeout = 1800",
                         f'stormcrawler_version = {q(os.environ["STORMCRAWLER_VERSION"])}']
               crawlers = "stormcrawler"
-          elif job == "ccnutch":
+          elif job == "nutchcc":
               # the image is built above; its revision and date are read from the crawl log
-              lines += ["[crawlers.ccnutch]", 'track = "dev"', 'engine = "docker"', "build = false", "timeout = 1800"]
-              crawlers = "ccnutch"
+              lines += ["[crawlers.nutchcc]", 'track = "dev"', 'engine = "docker"', "build = false", "timeout = 1800"]
+              crawlers = "nutchcc"
           elif job.startswith("heritrix"):
               track = "dev" if job == "heritrix-dev" else "release"
               version = f'version = {{ revision = {q(os.environ["HERITRIX_REVISION"])}, date = {q(os.environ["HERITRIX_DATE"])} }}'

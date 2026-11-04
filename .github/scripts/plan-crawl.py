@@ -43,7 +43,7 @@ else:
         {"job": "browsertrix", "version": "", "java": ""},
         {"job": "zeno", "version": "", "java": ""},
         {"job": "stormcrawler", "version": "", "java": java or "21"},
-        {"job": "ccnutch", "version": "", "java": ""},
+        {"job": "nutchcc", "version": "", "java": ""},
     ]
     if os.path.isdir("results"):
         stale = json.loads(subprocess.run(["crawlertests", "stale", "results"], check=True, capture_output=True,
