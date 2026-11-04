@@ -2,6 +2,7 @@
 
 import gzip
 import json
+import shutil
 from io import BytesIO
 import ssl
 import urllib.request
@@ -297,6 +298,15 @@ def test_records_saving_and_site(tmp_path):
     assert save_run(run_dir, results) == []  # same versions: nothing new
     assert len(save_run(run_dir, results, force=True)) == 1
     assert [r["run"] for r in load_records(results)] == ["r1"]
+
+    # backfilling an older version doesn't make the current version look new again
+    old = make_record(meta | {"run": "r0", "time": "2026-01-02T00:00:00+00:00",
+                              "crawlers": {"perfect": meta["crawlers"]["perfect"] | {"version": {"version": "0.9"}}}},
+                      "perfect", captured, set())
+    write_record(old, tmp_path / "r0" / "records" / "perfect.json")
+    assert len(save_run(tmp_path / "r0", results)) == 1
+    assert save_run(run_dir, results) == []
+    shutil.rmtree(results / "runs" / "r0")
 
     build_site(tmp_path / "empty", cases, tmp_path / "empty-site")
     assert "No runs yet" in (tmp_path / "empty-site" / "index.html").read_text()

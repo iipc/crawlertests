@@ -105,19 +105,15 @@ def fingerprint(record: dict) -> tuple:
 
 def save_run(run_dir: Path, results_dir: Path, force: bool = False) -> list[Path]:
     """Copy a run's records into the results directory, skipping any whose crawler and suite versions are the
-    same as the latest stored run of that crawler and track (unless forced). Returns the paths written."""
-    latest = {}
-    for record in load_records(results_dir):
-        key = (record["crawler"], record.get("track"))
-        if key not in latest or (record.get("time") or "") >= (latest[key].get("time") or ""):
-            latest[key] = record
+    same as a stored run of that crawler and track (unless forced), so backfilling an older version doesn't make
+    the next nightly run save the current version again. Returns the paths written."""
+    stored = {fingerprint(record) for record in load_records(results_dir)}
     written = []
     for path in sorted((run_dir / "records").glob("*.json")):
         record = json.loads(path.read_text())
         if record["status"] != "ok":
             continue
-        previous = latest.get((record["crawler"], record.get("track")))
-        if not force and previous is not None and fingerprint(previous) == fingerprint(record):
+        if not force and fingerprint(record) in stored:
             continue
         dest = results_dir / "runs" / record["run"] / path.name
         write_record(record, dest)
