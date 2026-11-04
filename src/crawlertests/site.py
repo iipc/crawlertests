@@ -44,8 +44,21 @@ def series_slug(record: dict) -> str:
 
 
 def series_label(record: dict) -> str:
-    track = record.get("track")
-    return record["crawler"] if track in (None, "", "local") else f"{record['crawler']} · {track}"
+    return record.get("_label") or record["crawler"]
+
+
+def _label_series(series: dict[str, list[dict]]):
+    """Name each series after its crawler, adding the track only to tell apart tracks of the same crawler:
+    "heritrix" for releases (or the only track), "heritrix (dev)" for development builds."""
+    tracks = defaultdict(set)
+    for rs in series.values():
+        tracks[rs[0]["crawler"]].add(rs[0].get("track") or "local")
+    for rs in series.values():
+        crawler, track = rs[0]["crawler"], rs[0].get("track") or "local"
+        others = tracks[crawler] - {track}
+        plain = not others or (track == "release" and len(tracks[crawler]) > 1)
+        for r in rs:
+            r["_label"] = crawler if plain else f"{crawler} ({track})"
 
 
 def version_label(record: dict) -> str:
@@ -83,6 +96,7 @@ def build_site(results_dir: Path, cases: dict[str, Case], out: Path):
         series[series_slug(r)].append(r)
     for rs in series.values():
         rs.sort(key=lambda r: (record_date(r), r.get("time") or ""))
+    _label_series(series)
     slugs = sorted(series, key=lambda s: series_label(series[s][-1]))
 
     _write_index(out, cases, series, slugs, scored)

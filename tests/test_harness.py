@@ -303,7 +303,7 @@ def test_records_saving_and_site(tmp_path):
 
     build_site(results, cases, tmp_path / "site")
     index = (tmp_path / "site" / "index.html").read_text()
-    assert "perfect · release" in index and "<svg" in index
+    assert ">perfect<" in index and "perfect (" not in index and "<svg" in index
     assert (tmp_path / "site" / "runs" / "r1" / "index.html").exists()
     assert (tmp_path / "site" / "history" / "perfect--release.html").exists()
     assert json.loads((tmp_path / "site" / "data" / "index.json").read_text())[0]["id"] == "r1/perfect"
