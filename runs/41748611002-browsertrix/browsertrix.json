@@ -5,7 +5,7 @@
  "crawler": "browsertrix",
  "type": "browsertrix",
  "track": "release",
- "version": {"product": "Browsertrix Crawler", "version": "1.15.2"},
+ "version": {"product": "Browsertrix Crawler", "version": "1.15.2", "revision": "3aff4355cfbe8a197439f9682621ef1f2b62ea36", "date": "2026-10-29T01:09:31.060Z"},
  "suite": {"revision": "91985e8ac4a2a48d94c342fe16c301f85d61e414", "dirty": false},
  "platform": "linux-x86_64",
  "status": "ok",
