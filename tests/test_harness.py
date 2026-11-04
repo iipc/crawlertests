@@ -298,6 +298,9 @@ def test_records_saving_and_site(tmp_path):
     assert len(save_run(run_dir, results, force=True)) == 1
     assert [r["run"] for r in load_records(results)] == ["r1"]
 
+    build_site(tmp_path / "empty", cases, tmp_path / "empty-site")
+    assert "No runs yet" in (tmp_path / "empty-site" / "index.html").read_text()
+
     build_site(results, cases, tmp_path / "site")
     index = (tmp_path / "site" / "index.html").read_text()
     assert "perfect · release" in index and "<svg" in index

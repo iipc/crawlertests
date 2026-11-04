@@ -19,6 +19,8 @@ from .compare import crawler_scores
 from .history import load_records, results_for, score_record
 from .report import STYLE, _cell_class, _e, _ratio, case_details, cases_table, page, scores_table
 
+SOURCE = "https://github.com/iipc/crawlertests"
+
 # A categorical palette that reads on both the light and dark backgrounds.
 SERIES_COLORS = ["#4269d0", "#ef6c3b", "#3ca951", "#a463f2", "#d4a106", "#2bb3c0", "#e2559b", "#8c6d4f"]
 
@@ -119,10 +121,15 @@ def _write_index(out: Path, cases, series, slugs, scored):
         ("", lambda label, info: f'<a href="history/{_e(series_slug(by_label[label]))}.html">history</a> · '
                                  f'<a href="runs/{_e(by_label[label]["run"])}/index.html">report</a>'),
     ]
-    chart = _chart(series, slugs, scored) if latest else '<p class="desc">No runs yet.</p>'
+    if latest:
+        chart = _chart(series, slugs, scored)
+        matrix = cases_table(results, case_link=lambda name: f"{SOURCE}/tree/main/cases/{name}",
+                             cell_link=lambda name, label: f"runs/{by_label[label]['run']}/index.html#{name}")
+    else:
+        chart = matrix = '<p class="desc">No runs yet.</p>'
     body = f"""<h1>Web archiving crawler tests</h1>
 <nav><a href="compare.html">compare runs</a>
-<a href="https://github.com/iipc/crawlertests">test suite</a></nav>
+<a href="{SOURCE}">test suite</a></nav>
 <p class="desc">How well web archiving crawlers discover and capture the resources of a set of small test sites.
 Every run is scored against the current version of the tests, so scores are comparable across time.</p>
 
@@ -133,8 +140,7 @@ Every run is scored against the current version of the tests, so scores are comp
 {chart}
 
 <h2>Cases</h2>
-{cases_table(results, case_link=lambda name: f"runs/{by_label[next(iter(by_label))]['run']}/index.html#{name}",
-             cell_link=lambda name, label: f"runs/{by_label[label]['run']}/index.html#{name}")}
+{matrix}
 """
     (out / "index.html").write_text(page("Crawler tests", body, root="./"))
 
@@ -255,6 +261,7 @@ def _write_compare(out: Path, records: list[dict], scored):
         path.write_text(json.dumps(data, separators=(",", ":")))
         index.append({"id": f"{r['run']}/{r['crawler']}", "series": series_label(r),
                       "label": f"{series_label(r)} — {version_label(r)} ({record_date(r).date()})"})
+    (out / "data").mkdir(exist_ok=True)
     (out / "data" / "index.json").write_text(json.dumps(index, indent=1))
     body = """<nav><a href="index.html">← all results</a></nav>
 <h1>Compare runs</h1>
