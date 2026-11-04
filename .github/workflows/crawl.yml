@@ -75,7 +75,13 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{ inputs.java || '21' }}
-          cache: maven
+
+      - uses: actions/cache@v6
+        if: steps.selected.outputs.run == 'true' && matrix.job == 'heritrix-dev'
+        with:
+          path: ~/.m2/repository
+          key: maven-heritrix-${{ github.run_id }}
+          restore-keys: maven-heritrix-
 
       - uses: browser-actions/setup-firefox@v1
         if: steps.selected.outputs.run == 'true' && startsWith(matrix.job, 'heritrix')
@@ -208,7 +214,8 @@ jobs:
 
   site:
     needs: save
-    if: needs.save.outputs.saved == '1'
+    # always(), or a failed crawl job would skip publishing the others' results
+    if: always() && needs.save.outputs.saved == '1'
     permissions:
       contents: read
       pages: write
