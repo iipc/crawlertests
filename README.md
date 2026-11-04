@@ -215,6 +215,11 @@ Some expectations describe ideal archival behaviour rather than what any
 crawler does today (all srcset candidates, click handlers). Cases are tagged so
 they can be run or discussed in groups.
 
+A crawler that skips some of what the cases test by design (Common Crawl's
+Nutch only collects text) is marked with a * and a note under the scores, so
+a low score isn't read as a bug. The default notes are in `NOTES` in
+`crawlers/__init__.py`; a crawler's config can set its own with `note = "…"`.
+
 ## Crawler notes
 
 **Heritrix.** The job configuration is generated from the

@@ -112,6 +112,7 @@ code { font: 13px/1.4 ui-monospace, monospace; word-break: break-all; }
 section.case { border-top: 1px solid var(--line); margin-top: 24px; }
 ul { margin: 4px 0; padding-left: 20px; }
 td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.note { text-decoration: none; margin-left: 2px; }
 .over { font-size: 12px; font-weight: 600; margin-left: 6px; }
 """
 
@@ -142,19 +143,23 @@ def scores_table(results: dict, extra_columns=None) -> str:
     rows = []
     for c, info in results["crawlers"].items():
         extra = "".join(f"<td>{fn(c, info)}</td>" for _, fn in extra_columns)
+        name = _e(c) + (f'<a class="note" href="#note-{_e(c)}" title="{_e(info["note"])}">*</a>'
+                        if info.get("note") else "")
         if sc := info.get("scores"):
             duration = f'{info["duration"]:.0f}s' if info.get("duration") is not None else ""
             rows.append(
-                f'<tr><th scope="row">{_e(c)}</th>{extra}'
+                f'<tr><th scope="row">{name}</th>{extra}'
                 f'<td class="num">{_e(_ratio(sc["captured"], sc["expected"]))}</td>'
                 f'<td class="num">{_e(_ratio(sc["overcrawled"], sc["unexpected"]))}</td>'
                 f'<td class="num"><strong>{_e(_ratio(sc["hits"], sc["total"]))}</strong></td>'
                 f'<td class="num">{duration}</td>'
                 f'<td>{_e(info.get("message") or "")}</td></tr>')
         else:
-            rows.append(f'<tr><th scope="row">{_e(c)}</th>{extra}<td colspan="4" class="desc">{_e(info["status"])}'
+            rows.append(f'<tr><th scope="row">{name}</th>{extra}<td colspan="4" class="desc">{_e(info["status"])}'
                         f'</td><td>{_e(info.get("message") or "")}</td></tr>')
     extra_head = "".join(f"<th>{_e(h)}</th>" for h, _ in extra_columns)
+    notes = "".join(f'<p class="desc" id="note-{_e(c)}"><b>{_e(c)}*</b>: {_e(info["note"])}</p>'
+                    for c, info in results["crawlers"].items() if info.get("note"))
     return f"""<div class="scroll"><table>
 <tr><th>crawler</th>{extra_head}<th>captured ↑</th><th>overcrawled ↓</th><th>accuracy ↑</th>
 <th>time</th><th>message</th></tr>
@@ -162,7 +167,8 @@ def scores_table(results: dict, extra_columns=None) -> str:
 </table></div>
 <p class="desc"><b>Captured</b>: URLs a case expects that were captured.
 <b>Overcrawled</b>: URLs captured that a case says shouldn't be (<code>expect_not</code>).
-<b>Accuracy</b>: expectations met, counting both. In the case table, +N is the number overcrawled.</p>"""
+<b>Accuracy</b>: expectations met, counting both. In the case table, +N is the number overcrawled.</p>
+{notes}"""
 
 
 def cases_table(results: dict, case_link=lambda name: f"#{name}", cell_link=None) -> str:

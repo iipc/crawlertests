@@ -16,7 +16,7 @@ from pathlib import Path
 
 from .cases import Case
 from .compare import crawler_scores
-from .history import CaseHashes, load_records, merge_builds, results_for, score_record
+from .history import CaseHashes, crawler_note, load_records, merge_builds, results_for, score_record
 from .report import STYLE, _cell_class, _e, _ratio, case_details, cases_table, page, scores_table
 
 SOURCE = "https://github.com/iipc/crawlertests"
@@ -325,6 +325,7 @@ def _write_history(out: Path, slug: str, records: list[dict], cases, scored, lim
             rows.append(f'<tr><th scope="row" title="{_e(case.title)}">{_e(name)}</th>{"".join(cells)}</tr>')
     body = f"""<nav><a href="../index.html">← all results</a><a href="../compare.html">compare runs</a></nav>
 <h1>{_e(label)}: history</h1>
+{f'<p class="desc"><b>Note</b>: {_e(note)}</p>' if (note := crawler_note(records[-1])) else ""}
 <p class="desc">Each case's result in the last {len(records)} saved runs, oldest first, scored against the current
 tests. An outlined cell differs from the run before.</p>
 <div class="scroll"><table>

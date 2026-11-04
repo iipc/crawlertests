@@ -23,6 +23,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from .cases import Case
+from .crawlers import NOTES
 from .compare import crawler_scores, score_case
 from .warcs import Capture
 
@@ -43,6 +44,7 @@ def make_record(meta: dict, name: str, captured: dict[str, list[Capture]], reque
         "time": meta.get("time"),
         "crawler": name,
         "type": info.get("type"),
+        "note": info.get("note"),
         "track": info.get("track"),
         "version": info.get("version", {}),
         "suite": meta.get("suite", {}),
@@ -73,12 +75,18 @@ def score_record(record: dict, cases: dict[str, Case]) -> dict[str, dict]:
     return {name: score_case(cases[name], captured, requested) for name in record["cases"] if name in cases}
 
 
+def crawler_note(record: dict) -> str | None:
+    """Why a crawler skips some of what the cases test by design, if it does."""
+    return record.get("note") or NOTES.get(record.get("type"))
+
+
 def results_for(records: list[tuple[str, dict]], cases: dict[str, Case], run: str) -> dict:
     """Build a results dict (as rendered by report.py) from (column label, record) pairs."""
     results = {"run": run, "crawlers": {}, "cases": {}}
     scored = {}
     for label, record in records:
         info = {k: record.get(k) for k in ("status", "message", "duration", "version", "track")}
+        info["note"] = crawler_note(record)
         results["crawlers"][label] = info
         if record["status"] == "ok":
             scored[label] = score_record(record, cases)

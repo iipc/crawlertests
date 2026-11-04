@@ -199,6 +199,8 @@ def suite_version(cases_dir: Path) -> dict:
 
 def run_crawler(crawler, cases, server: FixtureServer, run_dir: Path) -> dict:
     info = {"type": crawler.config.get("type", crawler.name), "track": crawler.config.get("track", "local")}
+    if note := crawler.config.get("note"):
+        info["note"] = note
     if reason := crawler.unavailable():
         print(f"[{crawler.name}] skipped: {reason}")
         return info | {"status": "skipped", "message": reason, "duration": 0}

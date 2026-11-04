@@ -11,6 +11,15 @@ import subprocess
 from pathlib import Path
 
 
+# Shown with a * next to a crawler's results, for crawlers that skip some of what the cases test by design,
+# so a low score isn't read as a bug. A crawler's config can set its own `note`.
+NOTES = {
+    "nutchcc": "Common Crawl collects text for its corpus. Its URL filters skip images, CSS, JavaScript, other "
+               "non-text files and URLs with a query string, as links and as embeds, so it misses many expected "
+               "URLs by design.",
+}
+
+
 class CrawlError(Exception):
     pass
 
