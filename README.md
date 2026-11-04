@@ -53,7 +53,7 @@ uv run crawlertests save runs/20261103-201500 results/   # add a run's records t
 uv run crawlertests site results/ -o _site                # build the website from a history
 ```
 
-The website shows the latest result for each crawler, the score over time,
+The website shows the latest result for each crawler, its accuracy over time,
 each case's history, and a comparison of any two runs. Saved runs are
 re-scored against the current expectations, but a run's captures only cover
 the cases it crawled, as their fixtures were then. So each record also holds a

@@ -211,7 +211,7 @@ def _view(series, view_slugs, cases, scored, colors) -> str:
     return f"""<h2>Latest results</h2>
 {scores_table(results, columns)}
 
-<h2>Score over time</h2>
+<h2>Accuracy over time</h2>
 {chart}
 
 <h2>Cases</h2>
@@ -260,13 +260,13 @@ def _chart(series, slugs, scored, colors: dict[str, str], case_count: int) -> st
             path = " ".join(f"{cx:.1f},{cy:.1f}" for cx, cy in coords)
             parts.append(f'<polyline points="{path}" fill="none" stroke="{color}" stroke-width="2"/>')
         for (cx, cy), (d, sc, r) in zip(coords, ps):
-            tip = (f"{crawler} {version_label(r)} ({d.date()})\nscore {_ratio(sc['hits'], sc['total'])}, "
+            tip = (f"{crawler} {version_label(r)} ({d.date()})\naccuracy {_ratio(sc['hits'], sc['total'])}, "
                    f"captured {_ratio(sc['captured'], sc['expected'])}, "
                    f"overcrawled {_ratio(sc['overcrawled'], sc['unexpected'])}")
             parts.append(f'<a href="runs/{_e(r["run"])}/index.html"><circle cx="{cx:.1f}" cy="{cy:.1f}" r="4" '
                          f'fill="{color}"><title>{_e(tip)}</title></circle></a>')
         legend.append(f'<span style="--c: {color}">{_e(crawler)}</span>')
-    svg = (f'<svg class="chart" viewBox="0 0 {width} {height}" role="img" aria-label="Score over time">'
+    svg = (f'<svg class="chart" viewBox="0 0 {width} {height}" role="img" aria-label="Accuracy over time">'
            + "".join(parts) + "</svg>")
     return (f'<div class="legend">{"".join(legend)}</div>{svg}'
             f'<p class="desc">Expectations met on the {len(shared)} of {case_count} cases that every run shown crawled'
@@ -297,8 +297,8 @@ def _write_history(out: Path, slug: str, records: list[dict], cases, scored, lim
     label = series_label(records[-1])
     head = "".join(f'<th class="run"><a href="../runs/{_e(r["run"])}/index.html">{_e(version_label(r))}</a><br>'
                    f'{record_date(r).date()}</th>' for r in records)
-    summary = [("captured ↑", "captured", "expected"), ("overcrawled ↓", "overcrawled", "unexpected"),
-               ("score ↑", "hits", "total")]
+    summary = [("captured ↑", "captured", "expected"), ("overcrawled ↓", "overcrawled", "unexpected"),
+               ("accuracy ↑", "hits", "total")]
     rows = []
     for heading, n, d in summary:
         cells = []

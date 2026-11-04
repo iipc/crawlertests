@@ -21,10 +21,10 @@ def text_summary(results: dict) -> str:
                 cells.append(f"{mark} {r['hits']}/{r['total']}".ljust(col_width))
         lines.append(name.ljust(name_width) + "  " + "  ".join(cells))
     lines.append("")
-    lines.append(f"{'crawler'.ljust(col_width)}  {'cases':>7}  {'captured':>15}  {'overcrawled':>15}  {'score':>15}")
+    lines.append(f"{'crawler'.ljust(col_width)}  {'captured':>15}  {'overcrawled':>15}  {'accuracy':>15}")
     for c, info in results["crawlers"].items():
         if s := info.get("scores"):
-            lines.append(f"{c.ljust(col_width)}  {s['cases_passed']:>3}/{s['cases']:<3}  "
+            lines.append(f"{c.ljust(col_width)}  "
                          f"{_ratio(s['captured'], s['expected']):>15}  "
                          f"{_ratio(s['overcrawled'], s['unexpected']):>15}  "
                          f"{_ratio(s['hits'], s['total']):>15}")
@@ -32,7 +32,7 @@ def text_summary(results: dict) -> str:
             lines.append(f"{c.ljust(col_width)}  {info['status']}" + (f" — {info['message']}" if info.get("message") else ""))
     lines.append("")
     lines.append("captured: expected URLs captured · overcrawled: captured URLs a case says shouldn't be"
-                 " · score: expectations met")
+                 " · accuracy: expectations met, counting both")
     return "\n".join(lines)
 
 
@@ -146,24 +146,23 @@ def scores_table(results: dict, extra_columns=None) -> str:
             duration = f'{info["duration"]:.0f}s' if info.get("duration") is not None else ""
             rows.append(
                 f'<tr><th scope="row">{_e(c)}</th>{extra}'
-                f'<td class="num">{sc["cases_passed"]}/{sc["cases"]}</td>'
                 f'<td class="num">{_e(_ratio(sc["captured"], sc["expected"]))}</td>'
                 f'<td class="num">{_e(_ratio(sc["overcrawled"], sc["unexpected"]))}</td>'
                 f'<td class="num"><strong>{_e(_ratio(sc["hits"], sc["total"]))}</strong></td>'
                 f'<td class="num">{duration}</td>'
                 f'<td>{_e(info.get("message") or "")}</td></tr>')
         else:
-            rows.append(f'<tr><th scope="row">{_e(c)}</th>{extra}<td colspan="5" class="desc">{_e(info["status"])}'
+            rows.append(f'<tr><th scope="row">{_e(c)}</th>{extra}<td colspan="4" class="desc">{_e(info["status"])}'
                         f'</td><td>{_e(info.get("message") or "")}</td></tr>')
     extra_head = "".join(f"<th>{_e(h)}</th>" for h, _ in extra_columns)
     return f"""<div class="scroll"><table>
-<tr><th>crawler</th>{extra_head}<th>cases passed</th><th>captured ↑</th><th>overcrawled ↓</th><th>score ↑</th>
+<tr><th>crawler</th>{extra_head}<th>captured ↑</th><th>overcrawled ↓</th><th>accuracy ↑</th>
 <th>time</th><th>message</th></tr>
 {''.join(rows)}
 </table></div>
 <p class="desc"><b>Captured</b>: URLs a case expects that were captured.
 <b>Overcrawled</b>: URLs captured that a case says shouldn't be (<code>expect_not</code>).
-<b>Score</b>: expectations met, counting both. In the case table, +N is the number overcrawled.</p>"""
+<b>Accuracy</b>: expectations met, counting both. In the case table, +N is the number overcrawled.</p>"""
 
 
 def cases_table(results: dict, case_link=lambda name: f"#{name}", cell_link=None) -> str:
