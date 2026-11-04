@@ -83,12 +83,12 @@ workers = 4
 # java_opts = "-Xmx2g"
 # conf = { "http.robots.403.allow" = false }   # more StormCrawler settings
 
-[crawlers.ccnutch]
+[crawlers.nutchcc]
 # Common Crawl's fork of Apache Nutch, configured as in cc-nutch-example. It has
 # no releases, so the harness builds an image from source with podman or docker
-# (ccnutch/Dockerfile) and runs the example's crawl.sh in it.
+# (nutchcc/Dockerfile) and runs the example's crawl.sh in it.
 # engine = "podman"               # default: podman if installed, else docker
-# image = "localhost/crawlertests-ccnutch:latest"
+# image = "localhost/crawlertests-nutchcc:latest"
 # build = true                    # (re)build the image before crawling; false to use it as it is
 # nutch_ref = "cc"                # branch or commit of github.com/commoncrawl/nutch
 # example_ref = "HEAD"            # ... of github.com/commoncrawl/cc-nutch-example
@@ -98,7 +98,7 @@ workers = 4
 # conf = { "db.max.outlinks.per.page" = 500 }   # more nutch-site.xml settings
 
 # More crawlers can be added by name, with a 'type' of heritrix,
-# heritrix-browser, heritrix-penumbra, browsertrix, zeno, stormcrawler or ccnutch, e.g. to compare two versions:
+# heritrix-browser, heritrix-penumbra, browsertrix, zeno, stormcrawler or nutchcc, e.g. to compare two versions:
 # [crawlers.heritrix-chrome]
 # type = "heritrix-browser"
 # executable = "/opt/homebrew/bin/chromedriver"

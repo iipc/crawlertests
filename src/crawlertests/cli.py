@@ -38,7 +38,7 @@ DEFAULT_CRAWLERS = {
     "browsertrix": {"type": "browsertrix"},
     "zeno": {"type": "zeno"},
     "stormcrawler": {"type": "stormcrawler"},
-    "ccnutch": {"type": "ccnutch"},
+    "nutchcc": {"type": "nutchcc"},
 }
 
 

@@ -3,8 +3,8 @@
 https://github.com/commoncrawl/cc-nutch-example is Common Crawl's description
 of how to crawl to WARC files with its fork (https://github.com/commoncrawl/nutch).
 The fork has no releases, so the harness builds it from source in a container
-image (ccnutch/Dockerfile, which follows the example's build steps), and runs
-the example's crawl.sh (ccnutch/crawl.sh, a copy with a few marked changes) in
+image (nutchcc/Dockerfile, which follows the example's build steps), and runs
+the example's crawl.sh (nutchcc/crawl.sh, a copy with a few marked changes) in
 Hadoop local mode: inject, then rounds of generate, fetch with parsing and WARC
 writing, and updatedb.
 
@@ -29,8 +29,8 @@ from pathlib import Path
 from . import CrawlError, Crawler
 from .browsertrix import CONTAINER_HOSTS
 
-PROJECT = Path(__file__).parent / "ccnutch"
-DEFAULT_IMAGE = "localhost/crawlertests-ccnutch:latest"
+PROJECT = Path(__file__).parent / "nutchcc"
+DEFAULT_IMAGE = "localhost/crawlertests-nutchcc:latest"
 EXAMPLE_DIR = "/opt/cc-nutch-example"
 
 # build arg: (repository, default ref, config key)
@@ -51,7 +51,7 @@ SITE_OVERRIDES = {
 }
 
 
-class CCNutch(Crawler):
+class NutchCC(Crawler):
     def __init__(self, name: str, config: dict):
         super().__init__(name, config)
         self.engine = config.get("engine") or next((e for e in ("podman", "docker") if shutil.which(e)), None)
@@ -120,11 +120,11 @@ class CCNutch(Crawler):
             cmd.append("--add-host=host.docker.internal:host-gateway")
         cmd += [self.image, "bash", "/crawls/crawl.sh", "/crawls/crawl", str(self.config.get("rounds", 5)),
                 "/crawls/seeds"]
-        self.run_logged(cmd, workdir, "ccnutch.log")
+        self.run_logged(cmd, workdir, "nutchcc.log")
 
     def version(self, workdir: Path) -> dict:
         info = {"product": "Apache Nutch (Common Crawl fork)"}
-        log = workdir / "ccnutch.log"
+        log = workdir / "nutchcc.log"
         if log.exists():
             text = log.read_text(errors="replace")
             if m := re.search(r"^nutch-version (\S+)", text, re.M):
