@@ -287,12 +287,16 @@ def _write_history(out: Path, slug: str, records: list[dict], cases, scored, lim
     label = series_label(records[-1])
     head = "".join(f'<th class="run"><a href="../runs/{_e(r["run"])}/index.html">{_e(version_label(r))}</a><br>'
                    f'{record_date(r).date()}</th>' for r in records)
-    totals = []
-    for r in records:
-        sc = scored[(r["run"], r["crawler"])][1]
-        totals.append(f'<td class="num"><strong>{sc["hits"] / sc["total"]:.0%}</strong></td>' if sc["total"]
-                      else "<td></td>")
-    rows = [f'<tr><th scope="row">score</th>{"".join(totals)}</tr>']
+    summary = [("captured ↑", "captured", "expected"), ("overcrawled ↓", "overcrawled", "unexpected"),
+               ("score ↑", "hits", "total")]
+    rows = []
+    for heading, n, d in summary:
+        cells = []
+        for r in records:
+            sc = scored[(r["run"], r["crawler"])][1]
+            value = _e(_ratio(sc[n], sc[d]))
+            cells.append(f'<td class="num">{f"<strong>{value}</strong>" if n == "hits" else value}</td>')
+        rows.append(f'<tr><th scope="row">{heading}</th>{"".join(cells)}</tr>')
     for name, case in cases.items():
         cells, previous = [], None
         for r in records:
