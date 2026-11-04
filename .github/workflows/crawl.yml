@@ -1,12 +1,14 @@
 # Run the crawlers on every case and save their results to the results branch.
 #
 # Nightly, each crawler runs in its "release" track (the latest release) and
-# Heritrix also in its "dev" track (built from its default branch). A run is
-# only saved when the crawler or the test suite has changed since the last saved
-# run of that crawler and track, so the history is a record of versions rather
-# than of nights.
+# Heritrix also in its "dev" track (built from its default branch). Saved older
+# releases whose results predate the current cases or harness are re-crawled
+# too, so every version on the chart covers the same cases. A run is only saved
+# when the crawler or the test suite has changed since a saved run of that
+# crawler version, so the history is a record of versions rather than of nights.
 #
-# Run it by hand to backfill an older release, e.g. heritrix_release = 3.10.0.
+# Run it by hand to backfill an older release, e.g. heritrix_release = 3.10.0,
+# or with recrawl to re-crawl only the out-of-date saved versions.
 
 name: crawl
 
@@ -19,14 +21,18 @@ on:
         description: Heritrix release to run instead of the latest (e.g. 3.10.0)
         default: ""
       java:
-        description: Java version for Heritrix (older releases may need 11 or 17)
-        default: "21"
+        description: Java version for Heritrix (default chosen by release; 3.4.x needs 11, up to 3.13 needs 17)
+        default: ""
       browsertrix_tag:
         description: Browsertrix Crawler image tag to run instead of the latest (e.g. 1.10.0)
         default: ""
       only:
         description: Run only heritrix-release, heritrix-dev or browsertrix (default all)
         default: ""
+      recrawl:
+        description: Only re-crawl saved releases whose results predate the current cases or harness
+        type: boolean
+        default: false
       force:
         description: Save even if nothing changed since the last saved run
         type: boolean
@@ -40,72 +46,91 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  crawl:
-    strategy:
-      fail-fast: false
-      matrix:
-        job: [heritrix-release, heritrix-dev, browsertrix]
+  plan:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
     steps:
-      - name: Skip unless selected
-        id: selected
-        run: |
-          only="${{ inputs.only }}"
-          if [ -n "$only" ] && [ "$only" != "${{ matrix.job }}" ]; then echo "run=false"; else echo "run=true"; fi >> "$GITHUB_OUTPUT"
-          # a manual backfill of one crawler's release shouldn't also run the others
-          if [ -z "$only" ] && { [ -n "${{ inputs.heritrix_release }}" ] || [ -n "${{ inputs.browsertrix_tag }}" ]; }; then
-            case "${{ matrix.job }}" in
-              heritrix-release) [ -n "${{ inputs.heritrix_release }}" ] || echo "run=false" >> "$GITHUB_OUTPUT" ;;
-              heritrix-dev) echo "run=false" >> "$GITHUB_OUTPUT" ;;
-              browsertrix) [ -n "${{ inputs.browsertrix_tag }}" ] || echo "run=false" >> "$GITHUB_OUTPUT" ;;
-            esac
-          fi
-
       - uses: actions/checkout@v7
-        if: steps.selected.outputs.run == 'true'
         with:
           fetch-depth: 0  # the suite version is the last commit that changed the cases or harness
 
       - uses: astral-sh/setup-uv@v10.3.0
-        if: steps.selected.outputs.run == 'true'
+
+      - name: Get results
+        run: |
+          if git ls-remote --exit-code origin results >/dev/null; then
+            git fetch -q --depth 1 origin results
+            git worktree add results FETCH_HEAD
+          fi
+
+      - name: Plan
+        id: plan
+        env:
+          HERITRIX_RELEASE: ${{ inputs.heritrix_release }}
+          BROWSERTRIX_TAG: ${{ inputs.browsertrix_tag }}
+          JAVA: ${{ inputs.java }}
+          ONLY: ${{ inputs.only }}
+          RECRAWL: ${{ inputs.recrawl }}
+        run: |
+          matrix=$(uv run python .github/scripts/plan-crawl.py)
+          echo "$matrix" | python3 -m json.tool
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  crawl:
+    needs: plan
+    if: fromJSON(needs.plan.outputs.matrix).include[0] != null
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    name: crawl (${{ matrix.job }}${{ matrix.version && format(' {0}', matrix.version) || '' }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      RUN_NAME: ${{ github.run_id }}-${{ matrix.job }}${{ matrix.version && format('-{0}', matrix.version) || '' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # the suite version is the last commit that changed the cases or harness
+
+      - uses: astral-sh/setup-uv@v10.3.0
 
       - uses: actions/setup-java@v6
-        if: steps.selected.outputs.run == 'true' && startsWith(matrix.job, 'heritrix')
+        if: startsWith(matrix.job, 'heritrix')
         with:
           distribution: temurin
-          java-version: ${{ inputs.java || '21' }}
+          java-version: ${{ matrix.java }}
 
       - uses: actions/cache@v6
-        if: steps.selected.outputs.run == 'true' && matrix.job == 'heritrix-dev'
+        if: matrix.job == 'heritrix-dev'
         with:
           path: ~/.m2/repository
           key: maven-heritrix-${{ github.run_id }}
           restore-keys: maven-heritrix-
 
       - uses: browser-actions/setup-firefox@v1
-        if: steps.selected.outputs.run == 'true' && startsWith(matrix.job, 'heritrix')
+        if: startsWith(matrix.job, 'heritrix')
         id: firefox
 
       - name: Get Heritrix
-        if: steps.selected.outputs.run == 'true' && startsWith(matrix.job, 'heritrix')
+        if: startsWith(matrix.job, 'heritrix')
         id: heritrix
         working-directory: ${{ runner.temp }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
           "$GITHUB_WORKSPACE/.github/scripts/get-heritrix.sh"
-          ${{ matrix.job == 'heritrix-dev' && 'dev' || 'release' }} "${{ inputs.heritrix_release }}"
+          ${{ matrix.job == 'heritrix-dev' && 'dev' || 'release' }} "${{ matrix.version }}"
 
       - name: Configure
-        if: steps.selected.outputs.run == 'true'
         env:
           JOB: ${{ matrix.job }}
           HERITRIX_HOME: ${{ steps.heritrix.outputs.home }}
           HERITRIX_REVISION: ${{ steps.heritrix.outputs.revision }}
           HERITRIX_DATE: ${{ steps.heritrix.outputs.date }}
           FIREFOX: ${{ steps.firefox.outputs.firefox-path }}
-          BROWSERTRIX_TAG: ${{ inputs.browsertrix_tag || 'latest' }}
+          BROWSERTRIX_TAG: ${{ matrix.version || 'latest' }}
         run: |
           python3 - <<'EOF'
           import json, os
@@ -133,20 +158,19 @@ jobs:
           cat crawlertests.toml
 
       - name: Pull Browsertrix
-        if: steps.selected.outputs.run == 'true' && matrix.job == 'browsertrix'
-        run: docker pull "docker.io/webrecorder/browsertrix-crawler:${{ inputs.browsertrix_tag || 'latest' }}"
+        if: matrix.job == 'browsertrix'
+        run: docker pull "docker.io/webrecorder/browsertrix-crawler:${{ matrix.version || 'latest' }}"
 
       - name: Crawl
-        if: steps.selected.outputs.run == 'true'
         run: |
           args=()
           for c in $CRAWLERS; do args+=(-c "$c"); done
-          uv run crawlertests run -o "run/${{ github.run_id }}-${{ matrix.job }}" "${args[@]}"
+          uv run crawlertests run -o "run/$RUN_NAME" "${args[@]}"
 
       - uses: actions/upload-artifact@v7
-        if: steps.selected.outputs.run == 'true' && always()
+        if: always()
         with:
-          name: run-${{ matrix.job }}
+          name: run-${{ env.RUN_NAME }}
           path: |
             run/*/records/
             run/*/report.html

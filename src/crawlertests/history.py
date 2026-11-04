@@ -119,3 +119,47 @@ def save_run(run_dir: Path, results_dir: Path, force: bool = False) -> list[Path
         write_record(record, dest)
         written.append(dest)
     return written
+
+
+def version_key(record: dict) -> tuple:
+    """Identifies a crawler build: re-crawls of the same build for a newer suite share this key."""
+    v = record.get("version") or {}
+    return record["crawler"], record.get("track"), v.get("version"), v.get("revision")
+
+
+def current_records(records: list[dict]) -> list[dict]:
+    """The latest record of each crawler build, so a build re-crawled after the cases changed replaces its
+    earlier record instead of appearing twice."""
+    latest = {}
+    for record in records:
+        key = version_key(record)
+        if key not in latest or (record.get("time") or "") >= (latest[key].get("time") or ""):
+            latest[key] = record
+    return list(latest.values())
+
+
+# Java for each Heritrix release line: 3.4.x needs 11, up to 3.13 needs 17.
+def heritrix_java(version: str) -> str:
+    parts = [int(p) for p in version.split("-")[0].split(".")[:2] if p.isdigit()]
+    minor = parts[1] if len(parts) > 1 else 0
+    return "11" if minor <= 4 else "17" if minor <= 13 else "21"
+
+
+def stale_versions(records: list[dict], suite_revision: str | None, case_names: list[str]) -> list[dict]:
+    """Released crawler versions whose latest saved run predates the current cases or harness, as crawl workflow
+    matrix entries ({"job", "version", "java"}). Development builds aren't included: the nightly run replaces
+    them with the current build anyway."""
+    entries = {}
+    for record in current_records(records):
+        if record.get("track") != "release" or not (record.get("version") or {}).get("version"):
+            continue
+        fresh = (record.get("suite") or {}).get("revision") == suite_revision and set(case_names) <= set(record["cases"])
+        if fresh:
+            continue
+        version = record["version"]["version"]
+        if record.get("type", "").startswith("heritrix"):
+            entries[("heritrix-release", version)] = {"job": "heritrix-release", "version": version,
+                                                      "java": heritrix_java(version)}
+        elif record.get("type") == "browsertrix":
+            entries[("browsertrix", version)] = {"job": "browsertrix", "version": version, "java": ""}
+    return sorted(entries.values(), key=lambda e: (e["job"], e["version"]))

@@ -16,7 +16,7 @@ from pathlib import Path
 
 from .cases import Case
 from .compare import crawler_scores
-from .history import load_records, results_for, score_record
+from .history import current_records, load_records, results_for, score_record
 from .report import STYLE, _cell_class, _e, _ratio, case_details, cases_table, page, scores_table
 
 SOURCE = "https://github.com/iipc/crawlertests"
@@ -89,7 +89,7 @@ def record_date(record: dict) -> datetime:
 
 
 def build_site(results_dir: Path, cases: dict[str, Case], out: Path):
-    records = [r for r in load_records(results_dir) if r["status"] == "ok"]
+    records = current_records([r for r in load_records(results_dir) if r["status"] == "ok"])
     out.mkdir(parents=True, exist_ok=True)
     (out / "site.css").write_text(STYLE + SITE_STYLE)
 
@@ -176,7 +176,8 @@ for (const r of radios) r.addEventListener("change", () => history.replaceState(
 <nav><a href="compare.html">compare runs</a>
 <a href="{SOURCE}">test suite</a></nav>
 <p class="desc">How well web archiving crawlers discover and capture the resources of a set of small test sites.
-Every run is scored against the current version of the tests, so scores are comparable across time.</p>
+Saved runs are re-scored whenever the expected results change. A run only covers the cases that existed
+when it was crawled, so the chart compares runs on the cases they all share.</p>
 {switch}
 {''.join(sections) if series else '<p class="desc">No runs yet.</p>'}
 {script}
@@ -194,7 +195,7 @@ def _view(series, view_slugs, cases, scored, colors) -> str:
         ("", lambda label, info: f'<a href="history/{_e(series_slug(by_label[label]))}.html">history</a> · '
                                  f'<a href="runs/{_e(by_label[label]["run"])}/index.html">report</a>'),
     ]
-    chart = _chart(series, view_slugs, scored, colors)
+    chart = _chart(series, view_slugs, scored, colors, len(cases))
     matrix = cases_table(results, case_link=lambda name: f"{SOURCE}/tree/main/cases/{name}",
                          cell_link=lambda name, label: f"runs/{by_label[label]['run']}/index.html#{name}")
     return f"""<h2>Latest results</h2>
@@ -208,9 +209,15 @@ def _view(series, view_slugs, cases, scored, colors) -> str:
 """
 
 
-def _chart(series, slugs, scored, colors: dict[str, str]) -> str:
+def _chart(series, slugs, scored, colors: dict[str, str], case_count: int) -> str:
     width, height, left, right, top, bottom = 900, 320, 44, 16, 12, 28
-    points = {s: [(record_date(r), scored[(r["run"], r["crawler"])][1], r) for r in series[s]] for s in slugs}
+    # score every point on the same cases: those that all the runs shown crawled
+    plotted = [r for s in slugs for r in series[s]]
+    shared = set.intersection(*(set(scored[(r["run"], r["crawler"])][0]) for r in plotted))
+    if not shared:
+        return '<p class="desc">The runs shown have no cases in common to compare.</p>'
+    points = {s: [(record_date(r), crawler_scores([res for name, res in scored[(r["run"], r["crawler"])][0].items()
+                                                   if name in shared]), r) for r in series[s]] for s in slugs}
     dates = [d for ps in points.values() for d, _, _ in ps]
     lo, hi = min(dates).timestamp(), max(dates).timestamp()
     if hi - lo < 86400:
@@ -252,7 +259,9 @@ def _chart(series, slugs, scored, colors: dict[str, str]) -> str:
     svg = (f'<svg class="chart" viewBox="0 0 {width} {height}" role="img" aria-label="Score over time">'
            + "".join(parts) + "</svg>")
     return (f'<div class="legend">{"".join(legend)}</div>{svg}'
-            '<p class="desc">Expectations met, by the date of the crawler version (or of the run, for local runs). '
+            f'<p class="desc">Expectations met on the {len(shared)} of {case_count} cases that every run shown crawled'
+            f'{", so newer cases don't count until older versions are re-crawled" if len(shared) < case_count else ""}. '
+            'Points are placed at the date of the crawler version (or of the run, for local runs). '
             'Hover a point for details; click it for the run report.</p>')
 
 

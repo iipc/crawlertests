@@ -317,3 +317,24 @@ def test_records_saving_and_site(tmp_path):
     assert (tmp_path / "site" / "runs" / "r1" / "index.html").exists()
     assert (tmp_path / "site" / "history" / "perfect--release.html").exists()
     assert json.loads((tmp_path / "site" / "data" / "index.json").read_text())[0]["id"] == "r1/perfect"
+
+
+def test_stale_versions_and_current_records():
+    from crawlertests.history import current_records, heritrix_java, stale_versions
+
+    def record(crawler, type, version, suite, cases, time, track="release"):
+        return {"crawler": crawler, "type": type, "track": track, "version": {"version": version},
+                "suite": {"revision": suite}, "cases": cases, "time": time}
+
+    old = record("heritrix", "heritrix", "3.10.0", "s1", ["a"], "2026-01-01")
+    recrawled = record("heritrix", "heritrix", "3.10.0", "s2", ["a", "b"], "2026-02-01")
+    stale = [record("heritrix-browser", "heritrix-browser", "3.13.0", "s1", ["a", "b"], "2026-01-01"),
+             record("browsertrix", "browsertrix", "1.0.4", "s2", ["a"], "2026-01-01"),
+             record("heritrix", "heritrix", "3.19.0-SNAPSHOT", "s1", ["a"], "2026-01-01", track="dev")]
+    assert current_records([old, recrawled]) == [recrawled]
+    assert stale_versions([old, recrawled, *stale], "s2", ["a", "b"]) == [
+        {"job": "browsertrix", "version": "1.0.4", "java": ""},  # missing a case
+        {"job": "heritrix-release", "version": "3.13.0", "java": "17"},  # older suite
+    ]
+    assert [heritrix_java(v) for v in ("3.4.0-20210803", "3.5.0", "3.13.0", "3.14.1", "3.18.0")] == \
+        ["11", "17", "17", "21", "21"]

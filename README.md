@@ -49,17 +49,28 @@ uv run crawlertests save runs/20261103-201500 results/   # add a run's records t
 uv run crawlertests site results/ -o _site                # build the website from a history
 ```
 
-`save` skips a crawler whose version and suite version are the same as its
-latest saved run. The website shows the latest result for each crawler and
-track, the score over time, each case's history, and a comparison of any two
-runs, all scored against the current cases.
+`save` skips a crawler whose version and suite version match a saved run.
+The website shows the latest result for each crawler, the score over time,
+each case's history, and a comparison of any two runs. Saved runs are
+re-scored against the current expectations, but a run only has captures for
+the cases that existed when it was crawled, and its captures reflect the
+fixtures as they were then. So the chart scores every point on the cases all
+the plotted runs share, and when a crawler version is re-crawled its new run
+replaces the old one.
+
+```sh
+uv run crawlertests stale results/   # saved releases that predate the current cases or harness
+```
 
 On GitHub, the `crawl` workflow runs nightly: the latest releases of Heritrix
 and Browsertrix Crawler ("release" track) and Heritrix built from its default
 branch ("dev" track). It saves new records to the `results` branch and
 rebuilds the site on GitHub Pages; the `site` workflow also rebuilds it when
-the cases change. Run `crawl` by hand with `heritrix_release` or
-`browsertrix_tag` to backfill older versions.
+the cases change. The nightly run also re-crawls any saved release that
+`stale` lists, so after the cases change every version on the chart catches up
+within a night. Run `crawl` by hand with `heritrix_release` or
+`browsertrix_tag` to backfill older versions, or with `recrawl` to re-crawl the
+stale versions now.
 
 ## Writing a case
 

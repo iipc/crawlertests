@@ -5,6 +5,7 @@
   crawlertests run [-c CRAWLER] [CASE…]  crawl and compare
   crawlertests compare RUN_DIR           re-score an earlier run (e.g. after editing expectations)
   crawlertests save RUN_DIR RESULTS_DIR  add a run's records to a results history
+  crawlertests stale RESULTS_DIR         list saved versions to re-crawl for the current cases (JSON)
   crawlertests site RESULTS_DIR -o DIR   build the results history website
 """
 
@@ -22,7 +23,7 @@ from pathlib import Path
 from .cases import load_cases
 from .compare import captured_keys, requested_keys
 from .crawlers import CrawlError, make_crawler
-from .history import make_record, results_for, save_run, write_record
+from .history import load_records, make_record, results_for, save_run, stale_versions, write_record
 from .report import text_summary, write_html, write_json
 from .server import FixtureServer, dump_log
 from .urls import OTHER
@@ -85,6 +86,9 @@ def main(argv=None):
     p.add_argument("--force", action="store_true",
                    help="save even if the crawler and suite versions match the latest saved run")
 
+    p = sub.add_parser("stale", help="list saved crawler versions that need re-crawling for the current cases")
+    p.add_argument("results_dir", type=Path)
+
     p = sub.add_parser("site", help="build the results history website")
     p.add_argument("results_dir", type=Path)
     p.add_argument("-o", "--output", type=Path, default=Path("_site"))
@@ -104,6 +108,10 @@ def main(argv=None):
     elif args.command == "save":
         for path in save_run(args.run_dir, args.results_dir, args.force):
             print(f"saved {path}")
+    elif args.command == "stale":
+        suite = suite_version(args.cases_dir)
+        print(json.dumps(stale_versions(load_records(args.results_dir), suite.get("revision"),
+                                        list(load_cases(args.cases_dir)))))
     elif args.command == "site":
         from .site import build_site
         build_site(args.results_dir, load_cases(args.cases_dir), args.output)
