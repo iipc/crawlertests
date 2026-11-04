@@ -184,7 +184,7 @@ def scores_table(results: dict, extra_columns=None) -> str:
 </table></div>
 <p class="desc"><b>Captured</b>: URLs a case expects that were captured.
 <b>Overcrawled</b>: URLs captured that a case says shouldn't be (<code>expect_not</code>).
-<b>Accuracy</b>: expectations met, counting both. In the case table, each cell shows the expected URLs captured, and a red +N the number overcrawled. Its colour is the share captured, lowered by overcrawling to the share of all the case's expectations met, so only a case that fully passes is green.</p>
+<b>Accuracy</b>: expectations met, counting both.</p>
 {notes}"""
 
 
