@@ -157,9 +157,12 @@ def stale_versions(records: list[dict], suite_revision: str | None, case_names: 
         if fresh:
             continue
         version = record["version"]["version"]
-        if record.get("type", "").startswith("heritrix"):
+        kind = record.get("type", "")
+        if kind in ("heritrix", "heritrix-browser"):
             entries[("heritrix-release", version)] = {"job": "heritrix-release", "version": version,
                                                       "java": heritrix_java(version)}
-        elif record.get("type") == "browsertrix":
-            entries[("browsertrix", version)] = {"job": "browsertrix", "version": version, "java": ""}
+        elif kind in ("browsertrix", "zeno"):
+            entries[(kind, version)] = {"job": kind, "version": version, "java": ""}
+        elif kind == "stormcrawler":
+            entries[(kind, version)] = {"job": kind, "version": version, "java": "21"}
     return sorted(entries.values(), key=lambda e: (e["job"], e["version"]))

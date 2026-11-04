@@ -33,7 +33,10 @@ DEFAULT_CRAWLERS = {
     "heritrix": {"type": "heritrix"},
     "heritrix-strict-js": {"type": "heritrix", "extractor_js": {"strict": True}},
     "heritrix-browser": {"type": "heritrix-browser"},
+    "heritrix-penumbra": {"type": "heritrix-penumbra"},
     "browsertrix": {"type": "browsertrix"},
+    "zeno": {"type": "zeno"},
+    "stormcrawler": {"type": "stormcrawler"},
 }
 
 

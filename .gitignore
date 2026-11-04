@@ -5,3 +5,4 @@ __pycache__/
 .heritrix/
 .tls/
 _site/
+.tools/

@@ -1,7 +1,9 @@
 # Run the crawlers on every case and save their results to the results branch.
 #
 # Nightly, each crawler runs in its "release" track (the latest release) and
-# Heritrix also in its "dev" track (built from its default branch). Saved older
+# Heritrix also in its "dev" track (built from its default branch). Heritrix
+# with Penumbra is a "dev" track of its own: the latest Heritrix release with
+# Penumbra from its default branch (Penumbra has no releases). Saved older
 # releases whose results predate the current cases or harness are re-crawled
 # too, so every version on the chart covers the same cases. A run is only saved
 # when the crawler or the test suite has changed since a saved run of that
@@ -26,8 +28,14 @@ on:
       browsertrix_tag:
         description: Browsertrix Crawler image tag to run instead of the latest (e.g. 1.10.0)
         default: ""
+      zeno_release:
+        description: Zeno release to run instead of the latest (e.g. 2.0.27)
+        default: ""
+      stormcrawler_release:
+        description: StormCrawler release to run instead of the latest (e.g. 3.6.0)
+        default: ""
       only:
-        description: Run only heritrix-release, heritrix-dev or browsertrix (default all)
+        description: Run only heritrix-release, heritrix-dev, heritrix-penumbra, browsertrix, zeno or stormcrawler (default all)
         default: ""
       recrawl:
         description: Only re-crawl saved releases whose results predate the current cases or harness
@@ -69,6 +77,8 @@ jobs:
         env:
           HERITRIX_RELEASE: ${{ inputs.heritrix_release }}
           BROWSERTRIX_TAG: ${{ inputs.browsertrix_tag }}
+          ZENO_RELEASE: ${{ inputs.zeno_release }}
+          STORMCRAWLER_RELEASE: ${{ inputs.stormcrawler_release }}
           JAVA: ${{ inputs.java }}
           ONLY: ${{ inputs.only }}
           RECRAWL: ${{ inputs.recrawl }}
@@ -97,20 +107,20 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.0
 
       - uses: actions/setup-java@v6
-        if: startsWith(matrix.job, 'heritrix')
+        if: startsWith(matrix.job, 'heritrix') || matrix.job == 'stormcrawler'
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
 
       - uses: actions/cache@v6
-        if: matrix.job == 'heritrix-dev'
+        if: matrix.job == 'heritrix-dev' || matrix.job == 'stormcrawler'
         with:
           path: ~/.m2/repository
-          key: maven-heritrix-${{ github.run_id }}
-          restore-keys: maven-heritrix-
+          key: maven-${{ matrix.job }}-${{ github.run_id }}
+          restore-keys: maven-${{ matrix.job }}-
 
       - uses: browser-actions/setup-firefox@v1
-        if: startsWith(matrix.job, 'heritrix')
+        if: matrix.job == 'heritrix-release' || matrix.job == 'heritrix-dev'
         id: firefox
 
       - name: Get Heritrix
@@ -123,6 +133,42 @@ jobs:
           "$GITHUB_WORKSPACE/.github/scripts/get-heritrix.sh"
           ${{ matrix.job == 'heritrix-dev' && 'dev' || 'release' }} "${{ matrix.version }}"
 
+      - name: Get Zeno
+        if: matrix.job == 'zeno'
+        id: zeno
+        working-directory: ${{ runner.temp }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ matrix.version }}
+        run: |
+          repo=internetarchive/Zeno
+          tag=${VERSION:+v$VERSION}
+          tag=${tag:-$(gh release view -R "$repo" --json tagName -q .tagName)}
+          gh release download "$tag" -R "$repo" -p Zeno-linux-amd64 -O Zeno
+          chmod +x Zeno
+          {
+            echo "binary=$PWD/Zeno"
+            echo "version=${tag#v}"
+            echo "revision=$(gh api "repos/$repo/commits/$tag" -q .sha)"
+            echo "date=$(gh release view "$tag" -R "$repo" --json publishedAt -q .publishedAt)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Get StormCrawler version
+        if: matrix.job == 'stormcrawler'
+        id: stormcrawler
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ matrix.version }}
+        run: |
+          repo=apache/stormcrawler
+          tag=${VERSION:+stormcrawler-$VERSION}
+          tag=${tag:-$(gh release view -R "$repo" --json tagName -q .tagName)}
+          {
+            echo "version=${tag#stormcrawler-}"
+            echo "revision=$(gh api "repos/$repo/commits/$tag" -q .sha)"
+            echo "date=$(gh release view "$tag" -R "$repo" --json publishedAt -q .publishedAt)"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Configure
         env:
           JOB: ${{ matrix.job }}
@@ -131,13 +177,39 @@ jobs:
           HERITRIX_DATE: ${{ steps.heritrix.outputs.date }}
           FIREFOX: ${{ steps.firefox.outputs.firefox-path }}
           BROWSERTRIX_TAG: ${{ matrix.version || 'latest' }}
+          ZENO_BINARY: ${{ steps.zeno.outputs.binary }}
+          ZENO_VERSION: ${{ steps.zeno.outputs.version }}
+          ZENO_REVISION: ${{ steps.zeno.outputs.revision }}
+          ZENO_DATE: ${{ steps.zeno.outputs.date }}
+          STORMCRAWLER_VERSION: ${{ steps.stormcrawler.outputs.version }}
+          STORMCRAWLER_REVISION: ${{ steps.stormcrawler.outputs.revision }}
+          STORMCRAWLER_DATE: ${{ steps.stormcrawler.outputs.date }}
         run: |
           python3 - <<'EOF'
           import json, os
           job = os.environ["JOB"]
           q = json.dumps  # TOML basic strings are JSON-compatible
           lines = ['[server]', 'bind = "0.0.0.0"']
-          if job.startswith("heritrix"):
+          if job == "heritrix-penumbra":
+              # the version's revision and date are Penumbra's, which is what changes between runs
+              version = (f'version = {{ heritrix_revision = {q(os.environ["HERITRIX_REVISION"])}, '
+                         f'heritrix_date = {q(os.environ["HERITRIX_DATE"])} }}')
+              lines += ["[crawlers.heritrix-penumbra]", 'track = "dev"', version, "timeout = 2400",
+                        f'home = {q(os.environ["HERITRIX_HOME"])}', 'engine = "docker"', "install_deps = true"]
+              crawlers = "heritrix-penumbra"
+          elif job == "zeno":
+              version = (f'version = {{ version = {q(os.environ["ZENO_VERSION"])}, '
+                         f'revision = {q(os.environ["ZENO_REVISION"])}, date = {q(os.environ["ZENO_DATE"])} }}')
+              lines += ["[crawlers.zeno]", 'track = "release"', version, "timeout = 1800",
+                        f'binary = {q(os.environ["ZENO_BINARY"])}']
+              crawlers = "zeno"
+          elif job == "stormcrawler":
+              version = (f'version = {{ revision = {q(os.environ["STORMCRAWLER_REVISION"])}, '
+                         f'date = {q(os.environ["STORMCRAWLER_DATE"])} }}')
+              lines += ["[crawlers.stormcrawler]", 'track = "release"', version, "timeout = 1800",
+                        f'stormcrawler_version = {q(os.environ["STORMCRAWLER_VERSION"])}']
+              crawlers = "stormcrawler"
+          elif job.startswith("heritrix"):
               track = "dev" if job == "heritrix-dev" else "release"
               version = f'version = {{ revision = {q(os.environ["HERITRIX_REVISION"])}, date = {q(os.environ["HERITRIX_DATE"])} }}'
               for name in ("heritrix", "heritrix-strict-js", "heritrix-browser"):

@@ -72,7 +72,16 @@ def make_crawler(name: str, config: dict) -> Crawler:
     if kind == "heritrix-browser":
         from .heritrix import Heritrix
         return Heritrix(name, config, browser=True)
+    if kind == "heritrix-penumbra":
+        from .penumbra import HeritrixPenumbra
+        return HeritrixPenumbra(name, config)
     if kind == "browsertrix":
         from .browsertrix import Browsertrix
         return Browsertrix(name, config)
+    if kind == "zeno":
+        from .zeno import Zeno
+        return Zeno(name, config)
+    if kind == "stormcrawler":
+        from .stormcrawler import StormCrawler
+        return StormCrawler(name, config)
     raise ValueError(f"unknown crawler type {kind!r} for {name}")

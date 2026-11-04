@@ -45,14 +45,46 @@ extractor_js = { strict = true }
 #   "org.archive.modules.behaviors.ExtractLinksBehavior",
 # ]
 
+[crawlers.heritrix-penumbra]
+# Heritrix (inherits 'home') with Penumbra rendering pages in Chromium over
+# AMQP. Needs podman or docker (for RabbitMQ) and uv (to run Penumbra from git).
+# The heritrix-contrib jar for the Heritrix version is downloaded from Maven
+# Central; for an unreleased build, point contrib_jar at one you built.
+# contrib_jar = "~/src/heritrix3/contrib/target/heritrix-contrib-3.18.1-SNAPSHOT.jar"
+# penumbra_ref = "main"           # a branch, tag or commit of internetarchive/penumbra
+# concurrency = 4                 # pages Penumbra renders at once
+# rabbitmq_image = "docker.io/library/rabbitmq:3"
+# install_deps = false            # playwright install --with-deps (Linux CI)
+# penumbra_env = { page_timeout_seconds = 120 }   # more PENUMBRA_* settings
+
 [crawlers.browsertrix]
 # engine = "podman"   # or "docker"; autodetected
 image = "docker.io/webrecorder/browsertrix-crawler:latest"
 workers = 4
 # extra_args = ["--behaviors", "autoscroll,autoplay,autofetch,siteSpecific"]
 
+[crawlers.zeno]
+# A Zeno executable: a release binary (Linux and Windows only) or
+# go install github.com/internetarchive/Zeno/v2@latest. Defaults to Zeno on PATH.
+# binary = "~/go/bin/Zeno"
+# workers = 4
+# max_concurrent_assets = 4
+# headless = false                # Zeno's experimental headless browser mode
+# chromium = "/path/to/chromium"  # for headless; Zeno downloads one otherwise
+# extra_args = []
+
+[crawlers.stormcrawler]
+# Builds a local-mode topology with mvn against this StormCrawler release from
+# Maven Central (and the Storm version it was released with), and runs it with java.
+# stormcrawler_version = "3.7.0"
+# storm_version = "2.8.9"         # default: read from the release's POM
+# threads = 8                     # fetcher threads
+# embeds = true                   # extract embedded resources, not just a[href] and frames
+# java_opts = "-Xmx2g"
+# conf = { "http.robots.403.allow" = false }   # more StormCrawler settings
+
 # More crawlers can be added by name, with a 'type' of heritrix,
-# heritrix-browser or browsertrix, e.g. to compare two versions:
+# heritrix-browser, heritrix-penumbra, browsertrix, zeno or stormcrawler, e.g. to compare two versions:
 # [crawlers.heritrix-chrome]
 # type = "heritrix-browser"
 # executable = "/opt/homebrew/bin/chromedriver"
