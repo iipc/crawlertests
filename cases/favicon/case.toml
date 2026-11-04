@@ -1,0 +1,5 @@
+title = "Default favicon"
+description = "A page with no <link rel=icon>, so browsers fall back to /favicon.ico at the host root. Replay shows it in the tab, so it should be archived."
+tags = ["host-root", "browser"]
+expect = ["/favicon.ico"]
+root = { "/favicon.ico" = "favicon.ico" }

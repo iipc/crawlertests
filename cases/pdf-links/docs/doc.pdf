@@ -1,0 +1,53 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R /Outlines 6 0 R /PageMode /UseOutlines >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> /Annots [8 0 R 9 0 R 10 0 R] >>
+endobj
+4 0 obj
+<< /Length 174 >>
+stream
+BT /F1 14 Tf 72 720 Td (Absolute link) Tj 0 -24 Td (Relative link) Tj 0 -24 Td (Another PDF) Tj 0 -24 Td (Plain text URL: {{ORIGIN}}/cases/pdf-links/docs/text-url.html) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+6 0 obj
+<< /Type /Outlines /First 7 0 R /Last 7 0 R /Count 1 >>
+endobj
+7 0 obj
+<< /Title (Bookmark) /Parent 6 0 R /A << /S /URI /URI ({{ORIGIN}}/cases/pdf-links/docs/outline.html) >> >>
+endobj
+8 0 obj
+<< /Type /Annot /Subtype /Link /Rect [70 716 300 734] /Border [0 0 0] /A << /S /URI /URI ({{ORIGIN}}/cases/pdf-links/docs/absolute.html) >> >>
+endobj
+9 0 obj
+<< /Type /Annot /Subtype /Link /Rect [70 692 300 710] /Border [0 0 0] /A << /S /URI /URI (relative.html) >> >>
+endobj
+10 0 obj
+<< /Type /Annot /Subtype /Link /Rect [70 668 300 686] /Border [0 0 0] /A << /S /GoToR /F (other.pdf) /D [0 /Fit] >> >>
+endobj
+xref
+0 11
+0000000000 65535 f 
+0000000015 00000 n 
+0000000103 00000 n 
+0000000160 00000 n 
+0000000315 00000 n 
+0000000540 00000 n 
+0000000610 00000 n 
+0000000681 00000 n 
+0000000803 00000 n 
+0000000961 00000 n 
+0000001087 00000 n 
+trailer
+<< /Size 11 /Root 1 0 R >>
+startxref
+1222
+%%EOF

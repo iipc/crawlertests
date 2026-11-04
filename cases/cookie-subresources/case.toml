@@ -1,0 +1,30 @@
+title = "Cookies set by the page"
+description = "The page sets a session cookie in its response, and a script sets another one. An image and a linked page are only served (otherwise 403) when the request carries the Set-Cookie cookie, and an image added by the script only with the script's cookie. Crawlers need a cookie jar, and a browser's cookies for script-set ones."
+tags = ["cookies", "state"]
+expect = [
+  { url = "protected.png", status = 200 },
+  { url = "protected-page.html", status = 200 },
+  { url = "js-protected.png", status = 200 },
+]
+
+[[routes]]
+path = ""
+file = "index.html"
+headers = { "Set-Cookie" = "session=abc; Path=/cases/cookie-subresources/" }
+
+[[routes]]
+path = "protected.png"
+body = "image"
+content_type = "image/png"
+require_cookie = "session=abc"
+
+[[routes]]
+path = "protected-page.html"
+file = "protected-page.html"
+require_cookie = "session=abc"
+
+[[routes]]
+path = "js-protected.png"
+body = "image"
+content_type = "image/png"
+require_cookie = "scripted=1"

@@ -1,0 +1,13 @@
+{
+  "name": "crawlertests",
+  "start_url": "start.html",
+  "scope": "./",
+  "display": "standalone",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ],
+  "screenshots": [{"src": "screenshot.png", "sizes": "1280x720", "type": "image/png"}],
+  "shortcuts": [{"name": "Shortcut", "url": "shortcut.html", "icons": [{"src": "shortcut-icon.png", "sizes": "96x96"}]}],
+  "share_target": {"action": "share.html", "method": "GET", "params": {"title": "t"}}
+}

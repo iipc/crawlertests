@@ -1,0 +1,13 @@
+<!doctype html>
+<title>DOM insertion</title>
+<body>
+<script>
+  var img = document.createElement("img");
+  img.src = "dom-" + "img.png";
+  document.body.appendChild(img);
+  var a = document.createElement("a");
+  a.href = "dom-" + "link.html";
+  a.textContent = "inserted link";
+  document.body.appendChild(a);
+  document.write("<img src='written-" + "img.png'>");
+</script>

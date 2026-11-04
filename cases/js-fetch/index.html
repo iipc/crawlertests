@@ -1,0 +1,10 @@
+<!doctype html>
+<title>fetch</title>
+<script>
+  var api = "api/";
+  fetch(api + "fetch.json");
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", api + "xhr.json");
+  xhr.send();
+  import("./dynamic-" + "module.js");
+</script>

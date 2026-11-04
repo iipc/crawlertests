@@ -1,0 +1,10 @@
+title = "Cross-origin embeds and links"
+description = "Embedded resources served from a second origin should be captured even though they are outside the seed's scope; a plain link to a page on that origin should not be followed."
+tags = ["scope", "embeds"]
+expect = [
+  "{OTHER}/cases/cross-origin/other-img.png",
+  "{OTHER}/cases/cross-origin/other-script.js",
+  "{OTHER}/cases/cross-origin/other-style.css",
+  "{OTHER}/cases/cross-origin/other-style-bg.png",
+]
+expect_not = ["{OTHER}/cases/cross-origin/other-page.html"]

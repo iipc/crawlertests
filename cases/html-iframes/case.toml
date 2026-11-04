@@ -1,0 +1,11 @@
+title = "iframes and frames"
+description = "Documents loaded in iframes and frames are page requisites, and so are their own subresources: images, stylesheets, nested frames, and frames on another origin. A crawler has to treat each frame as a document and extract from it. One iframe is added by script. Links inside a cross-origin frame lead out of scope and should not be followed."
+tags = ["html", "frames", "embeds"]
+expect = [
+  "frame.html", "frame-img.png", "frame-style.css", "frame-bg.png", "frame-link.html",
+  "nested.html", "nested-img.png",
+  "{OTHER}/cases/html-iframes/other-frame.html", "{OTHER}/cases/html-iframes/other-frame-img.png",
+  "scripted-frame.html", "scripted-frame-img.png",
+  "frameset.html", "frame-a.html", "frame-a-img.png", "frame-b.html", "frame-b-img.png",
+]
+expect_not = ["{OTHER}/cases/html-iframes/other-frame-link.html"]

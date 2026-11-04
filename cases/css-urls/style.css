@@ -1,0 +1,7 @@
+@import "imported.css";
+@font-face { font-family: TestFont; src: url(font.woff2) format("woff2"); }
+body { font-family: TestFont, sans-serif; }
+.bg { background: url("bg.png"); }
+.set { background-image: image-set("set-1x.png" 1x, "set-2x.png" 2x); }
+/* a rule that matches nothing on the page; a browser never loads this image */
+.not-on-page { background: url(unused-rule.png); }

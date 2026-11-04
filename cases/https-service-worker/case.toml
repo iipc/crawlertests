@@ -1,0 +1,5 @@
+title = "Service worker"
+description = "A page registers a service worker (which needs a secure context, so the case is on HTTPS). The worker script imports a helper with importScripts() and precaches an offline page and an image when it installs. Replaying the site offline needs all of them."
+tags = ["https", "js", "workers"]
+https = true
+expect = ["sw.js", "sw-helper.js", "offline.html", "precached.png"]

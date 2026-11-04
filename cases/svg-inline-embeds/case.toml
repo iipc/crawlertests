@@ -1,0 +1,12 @@
+title = "Inline SVG embeds vs links"
+description = "Inline SVG in HTML. Embeds served from a second origin (image, feImage) should be captured as embeds even though they're out of scope, while an SVG link to that origin should not be followed. url() presentation attributes are same-origin, since browsers refuse cross-origin paint servers. A crawler that treats SVG embeds as navigational links misses them. See heritrix3#796."
+tags = ["svg", "scope", "embeds"]
+expect = [
+  "{OTHER}/cases/svg-inline-embeds/image.png",
+  "{OTHER}/cases/svg-inline-embeds/xlink-image.png",
+  "{OTHER}/cases/svg-inline-embeds/feimage.png",
+  "fill.svg",
+  "stroke.svg",
+  "style-attr.svg",
+]
+expect_not = ["{OTHER}/cases/svg-inline-embeds/page.html"]

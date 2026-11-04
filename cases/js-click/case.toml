@@ -1,0 +1,4 @@
+title = "Click handlers and load-more buttons"
+description = "Navigation and content that only happen when an element is clicked: onclick location changes, window.open and a 'load more' button that appends links."
+tags = ["js", "browser", "interaction"]
+expect = ["clicked.html", "opened.html", "more-1.html"]

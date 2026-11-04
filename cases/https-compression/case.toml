@@ -1,0 +1,29 @@
+title = "Brotli and zstd responses"
+description = "Pages and a stylesheet sent with br or zstd Content-Encoding, which browsers accept over HTTPS. One page is sent with br regardless of Accept-Encoding, as some servers and CDNs do. Extractors must see the decoded body."
+tags = ["https", "http", "compression"]
+https = true
+expect = [
+  "br.html", "from-br.html", "zstd.html", "from-zstd.html", "forced-br.html", "from-forced-br.html",
+  "style.css", "from-br-css.png",
+]
+
+[[routes]]
+path = "br.html"
+file = "br.html"
+encoding = "br"
+
+[[routes]]
+path = "zstd.html"
+file = "zstd.html"
+encoding = "zstd"
+
+[[routes]]
+path = "forced-br.html"
+file = "forced-br.html"
+encoding = "br"
+negotiate = false
+
+[[routes]]
+path = "style.css"
+file = "style.css"
+encoding = "br"

@@ -1,0 +1,11 @@
+title = "Webpack chunks"
+description = "A webpack runtime that builds chunk URLs from a public path, chunk ids and a hash map. The page loads two JS chunks and one CSS chunk; the others in the map load on other routes, so an archive should hold every chunk listed. See heritrix3#801."
+tags = ["js", "bundlers"]
+expect = [
+  "_next/static/chunks/webpack.js",
+  "_next/static/chunks/37.3f9c1a7e5b20d846.js",
+  "_next/static/chunks/7c41e0b9.b81d4e6f0a9c2753.js",
+  "_next/static/chunks/502.5e07c3a1d9f4b862.js",
+  "_next/static/chunks/d42f8a6b1c0e9375.css",
+  "_next/static/chunks/90a6e3c7f1b5d248.css",
+]

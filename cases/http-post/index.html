@@ -1,0 +1,13 @@
+<!doctype html>
+<title>POST</title>
+<body>
+<form method="post" action="search.html"><input name="q"><button>search</button></form>
+<script>
+  fetch("api/save", {method: "POST", headers: {"Content-Type": "application/json"}, body: '{"x": 1}'})
+    .then(response => response.json())
+    .then(data => {
+      const img = document.createElement("img");
+      img.src = data.image;
+      document.body.append(img);
+    });
+</script>

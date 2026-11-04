@@ -1,0 +1,35 @@
+title = "Compressed responses"
+description = "Pages, CSS and JS sent with gzip or deflate Content-Encoding, when the request's Accept-Encoding allows it and, for one page and one script, regardless (as some servers send pre-compressed files). Browsers decode all of these. Extractors must see the decoded body. br and zstd are left out because browsers only accept them over HTTPS."
+tags = ["http", "compression"]
+expect = [
+  "gzip.html", "from-gzip.html", "deflate.html", "from-deflate.html",
+  "forced-gzip.html", "from-forced-gzip.html",
+  "style.css", "from-gzip-css.png", "script.js", "from-forced-gzip-js.png",
+]
+
+[[routes]]
+path = "gzip.html"
+file = "gzip.html"
+encoding = "gzip"
+
+[[routes]]
+path = "deflate.html"
+file = "deflate.html"
+encoding = "deflate"
+
+[[routes]]
+path = "forced-gzip.html"
+file = "forced-gzip.html"
+encoding = "gzip"
+negotiate = false
+
+[[routes]]
+path = "style.css"
+file = "style.css"
+encoding = "gzip"
+
+[[routes]]
+path = "script.js"
+file = "script.js"
+encoding = "gzip"
+negotiate = false

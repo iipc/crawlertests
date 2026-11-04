@@ -1,0 +1,12 @@
+#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:2
+#EXT-X-MAP:URI="init.mp4"
+#EXT-X-KEY:METHOD=AES-128,URI="key.bin"
+#EXTINF:2.0,
+seg-1.ts
+#EXTINF:2.0,
+seg-2.ts
+#EXTINF:2.0,
+{{OTHER_ORIGIN}}/cases/media-hls/cdn/seg-3.ts
+#EXT-X-ENDLIST

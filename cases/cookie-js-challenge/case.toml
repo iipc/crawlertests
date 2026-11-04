@@ -1,0 +1,16 @@
+title = "JavaScript cookie challenge"
+description = "Without a cookie, the page is an interstitial (like a bot check) whose script sets the cookie and reloads. Only the reloaded page has the real content: an image and a link. Crawlers that don't run scripts only see the interstitial."
+tags = ["cookies", "state", "js"]
+expect = ["article-img.png", "article.html"]
+
+[[routes]]
+path = ""
+file = "index.html"
+require_cookie = "passed=1"
+without_cookie = { file = "challenge.html" }
+
+[[routes]]
+path = "index.html"
+file = "index.html"
+require_cookie = "passed=1"
+without_cookie = { file = "challenge.html" }

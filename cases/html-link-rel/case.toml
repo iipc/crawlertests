@@ -1,0 +1,7 @@
+title = "<link> relations"
+description = "Resources and related pages referenced from <link> elements: preloads, prefetches, module preloads, manifests, icons, feeds and canonical URLs."
+tags = ["html", "embeds"]
+expect = [
+  "preload.png", "prefetch.html", "modulepreload.js", "manifest.webmanifest",
+  "apple-touch-icon.png", "feed.rss", "canonical.html", "next.html",
+]

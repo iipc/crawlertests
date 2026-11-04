@@ -1,0 +1,19 @@
+<!doctype html>
+<title>Import maps</title>
+<script type="importmap">
+{
+  "imports": {
+    "app": "./vendor/app.js",
+    "lib/": "./vendor/lib/",
+    "./remapped.js": "./vendor/real-remapped.js"
+  },
+  "scopes": {
+    "./vendor/": { "dep": "./vendor/scoped-dep.js" }
+  }
+}
+</script>
+<script type="module">
+  import "app";
+  import "lib/util.js";
+  import "./remapped.js";
+</script>

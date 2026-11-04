@@ -1,0 +1,37 @@
+title = "HTTP redirects"
+description = "301, 302, 307 and 308 redirects and a redirect chain. The Refresh header has its own case."
+tags = ["http", "redirects"]
+expect = [
+  "r301", "target-301.html", "r302", "target-302.html", "r307", "target-307.html",
+  "r308", "target-308.html", "chain-1", "chain-2", "chain-end.html",
+]
+
+[[routes]]
+path = "r301"
+status = 301
+headers = { Location = "target-301.html" }
+
+[[routes]]
+path = "r302"
+status = 302
+headers = { Location = "target-302.html" }
+
+[[routes]]
+path = "r307"
+status = 307
+headers = { Location = "target-307.html" }
+
+[[routes]]
+path = "r308"
+status = 308
+headers = { Location = "{{ORIGIN}}/cases/http-redirects/target-308.html" }
+
+[[routes]]
+path = "chain-1"
+status = 302
+headers = { Location = "chain-2" }
+
+[[routes]]
+path = "chain-2"
+status = 302
+headers = { Location = "chain-end.html" }

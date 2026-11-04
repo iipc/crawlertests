@@ -1,0 +1,17 @@
+<!doctype html>
+<title>Shadow DOM</title>
+<x-card></x-card>
+<div>
+  <template shadowrootmode="open">
+    <a href="dsd-link.html">declarative link</a>
+    <img src="dsd-img.png" alt="">
+  </template>
+</div>
+<script>
+  customElements.define("x-card", class extends HTMLElement {
+    connectedCallback() {
+      const root = this.attachShadow({ mode: "open" });
+      root.innerHTML = '<a href="shadow-' + 'link.html">shadow link</a><img src="shadow-' + 'img.png">';
+    }
+  });
+</script>

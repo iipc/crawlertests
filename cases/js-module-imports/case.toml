@@ -1,0 +1,9 @@
+title = "Relative ES module imports"
+description = "Specifiers in ES modules resolve against the module's own URL, not the page that loaded it. Covers static import, export-from, minified import without spaces, dynamic import() and new URL(…, import.meta.url). See heritrix3#793."
+tags = ["js", "modules"]
+expect = [
+  "lib/sub/main.js", "lib/sub/dep.js", "lib/up.js", "lib/sub/reexport.js", "lib/sub/named.js",
+  "lib/sub/minified.js", "lib/sub/dynamic.js", "lib/sub/asset.png",
+]
+# where the same specifiers land if resolved against the page instead
+expect_not = ["dep.js", "reexport.js", "named.js", "minified.js", "dynamic.js", "asset.png"]

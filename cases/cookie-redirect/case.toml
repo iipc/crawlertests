@@ -1,0 +1,18 @@
+title = "Cookie set on a redirect"
+description = "A login link answers with a redirect that sets a session cookie; the page it redirects to is only served with that cookie (otherwise 403). The crawler must keep the cookie from the redirect response when following it."
+tags = ["cookies", "state", "redirects"]
+expect = [
+  { url = "login", status = 302 },
+  { url = "members.html", status = 200 },
+  "members-img.png",
+]
+
+[[routes]]
+path = "login"
+status = 302
+headers = { Location = "members.html", "Set-Cookie" = "member=yes; Path=/cases/cookie-redirect/" }
+
+[[routes]]
+path = "members.html"
+file = "members.html"
+require_cookie = "member=yes"

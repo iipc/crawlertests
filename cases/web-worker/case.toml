@@ -1,0 +1,4 @@
+title = "Web worker requests"
+description = "Requests made from a dedicated worker: importScripts() and fetch(). Browser-based crawlers sometimes miss traffic that does not come from the page itself."
+tags = ["js", "browser", "workers"]
+expect = ["worker.js", "worker-import.js", "worker-fetch.json"]

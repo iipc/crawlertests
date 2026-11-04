@@ -1,0 +1,10 @@
+title = "HLS playlists"
+description = "URIs in an HLS multivariant playlist (variant streams, EXT-X-MEDIA renditions, I-frame playlists) and in a media playlist (segments, EXT-X-MAP init section, EXT-X-KEY). URIs resolve against the playlist that contains them. See heritrix3#799."
+tags = ["media", "streaming"]
+expect = [
+  "master.m3u8",
+  "low/index.m3u8", "high/index.m3u8", "audio/en.m3u8", "iframes.m3u8",
+  "low/init.mp4", "low/key.bin", "low/seg-1.ts", "low/seg-2.ts", "{OTHER}/cases/media-hls/cdn/seg-3.ts",
+]
+# where media playlist URIs land if resolved against the page instead
+expect_not = ["init.mp4", "seg-1.ts"]

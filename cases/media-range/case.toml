@@ -1,0 +1,9 @@
+title = "Media with range requests"
+description = "An audio file on a server that supports byte ranges. Browsers fetch media with Range requests and get 206 Partial Content; an archive needs the whole file (a 200, or every range), or playback fails on replay."
+tags = ["media", "http"]
+expect = [{ url = "sound.wav", status = 200 }]
+
+[[routes]]
+path = "sound.wav"
+file = "sound.wav"
+ranges = true

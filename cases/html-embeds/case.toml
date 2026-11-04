@@ -1,0 +1,8 @@
+title = "Embedded resources"
+description = "Resources embedded by common HTML elements: scripts, stylesheets, images, frames, media, objects and form image inputs."
+tags = ["html", "embeds"]
+expect = [
+  "script.js", "style.css", "img.png", "iframe.html", "video.mp4", "poster.png",
+  "audio.mp3", "source.webm", "track.vtt", "object.svg", "embed.svg", "input.png",
+  "favicon.png",
+]

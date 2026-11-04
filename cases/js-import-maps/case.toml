@@ -1,0 +1,5 @@
+title = "Import maps"
+description = "An import map that maps bare specifiers, a path prefix and a relative URL to other files, plus a scoped mapping that applies only to modules under vendor/. A crawler that resolves module specifiers without the map fetches the wrong URLs."
+tags = ["js", "modules"]
+expect = ["vendor/app.js", "vendor/lib/util.js", "vendor/real-remapped.js", "vendor/scoped-dep.js"]
+expect_not = ["app", "lib/util.js", "remapped.js", "dep", "vendor/dep"]

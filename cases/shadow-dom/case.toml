@@ -1,0 +1,4 @@
+title = "Shadow DOM"
+description = "Links and images inside an open shadow root created by script, and inside a declarative shadow root."
+tags = ["js", "browser", "web-components"]
+expect = ["shadow-link.html", "shadow-img.png", "dsd-link.html", "dsd-img.png"]

@@ -1,0 +1,9 @@
+<!doctype html>
+<title>Hover and focus</title>
+<style>.card:hover { background-image: url(hover-css.png); }</style>
+<div class="card" id="card" style="width: 200px; height: 100px">Hover over me</div>
+<input id="search" placeholder="Search">
+<script>
+  card.addEventListener("mouseenter", () => { new Image().src = "hover-" + "js.png"; }, { once: true });
+  search.addEventListener("focus", () => fetch("sugg" + "est.json"), { once: true });
+</script>

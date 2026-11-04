@@ -1,0 +1,10 @@
+title = "POST requests"
+description = "A script POSTs to an API and adds an image named in the JSON response. The POST and its response are needed to replay the page, so they should be archived (as a POST). A search form with method=post should not be submitted."
+tags = ["js", "http", "forms"]
+expect = [{ url = "api/save", method = "POST" }, "saved.png"]
+expect_not = [{ url = "search.html", method = "POST" }]
+
+[[routes]]
+path = "api/save"
+body = '{"image": "saved.png"}'
+content_type = "application/json"

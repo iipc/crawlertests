@@ -1,0 +1,5 @@
+title = "<base href>"
+description = "A <base> element changes how every relative URL on the page resolves."
+tags = ["html", "links"]
+expect = ["based/page.html", "based/img.png", "based/style.css"]
+expect_not = ["page.html", "img.png", "style.css"]

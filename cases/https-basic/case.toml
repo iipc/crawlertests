@@ -1,0 +1,8 @@
+title = "HTTPS site"
+description = "A site served only over HTTPS (with a self-signed certificate, which crawlers are expected to accept for archiving). Embeds come from the same HTTPS origin and from a second one; a link leads to another page with its own image."
+tags = ["https", "embeds"]
+https = true
+expect = [
+  "style.css", "style-bg.png", "script.js", "img.png", "page.html", "page-img.png",
+  "{HTTPS_OTHER}/cases/https-basic/other-img.png",
+]

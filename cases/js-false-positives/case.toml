@@ -1,0 +1,8 @@
+title = "Strings that are not links"
+description = "Script strings that look like relative URLs but are MIME types, property paths and locale names. Requesting them wastes crawl budget and puts junk in the archive."
+tags = ["js", "precision"]
+expect = ["real.html"]
+expect_not = [
+  "application/json", "text/javascript", "image/png", "user.profile.name",
+  "en-US", "dd/mm/yyyy", "a/b",
+]

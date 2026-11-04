@@ -1,0 +1,11 @@
+<!doctype html>
+<title>iframes</title>
+<body>
+<iframe src="frame.html"></iframe>
+<iframe src="{{OTHER_ORIGIN}}/cases/html-iframes/other-frame.html"></iframe>
+<p><a href="frameset.html">a frameset page</a>
+<script>
+  const frame = document.createElement("iframe");
+  frame.src = "scripted-" + "frame.html";
+  document.body.append(frame);
+</script>

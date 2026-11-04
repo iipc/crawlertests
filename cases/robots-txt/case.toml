@@ -1,0 +1,10 @@
+title = "robots.txt"
+description = "Pages disallowed by robots.txt, including a wildcard rule and a longer Allow rule that overrides a Disallow. The robots.txt itself should be archived. Every crawler is configured to obey robots.txt, as the stock Heritrix profile does."
+tags = ["robots", "host-root"]
+robots = """
+Disallow: /cases/robots-txt/disallowed/
+Allow: /cases/robots-txt/disallowed/allowed.html
+Disallow: /cases/robots-txt/*-private.html
+"""
+expect = ["/robots.txt", "public.html", "disallowed/allowed.html"]
+expect_not = ["disallowed/page.html", "notes-private.html"]

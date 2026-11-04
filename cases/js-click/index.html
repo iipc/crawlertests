@@ -1,0 +1,14 @@
+<!doctype html>
+<title>Click handlers</title>
+<button onclick="location.href = 'click' + 'ed.html'">Go</button>
+<span role="link" onclick="window.open('open' + 'ed.html')">Open</span>
+<ul id="list"></ul>
+<button id="load-more">Load more</button>
+<script>
+  document.getElementById("load-more").addEventListener("click", function () {
+    var li = document.createElement("li");
+    li.innerHTML = '<a href="more-' + '1.html">More 1</a>';
+    document.getElementById("list").appendChild(li);
+    this.remove();
+  });
+</script>

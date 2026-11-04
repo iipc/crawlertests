@@ -1,0 +1,4 @@
+title = "Inline SVG references"
+description = "URLs in inline SVG: <image href>, legacy xlink:href, SVG anchors and <use> sprite references."
+tags = ["html", "svg"]
+expect = ["svg-image.png", "svg-xlink.png", "svg-link.html", "sprite.svg"]

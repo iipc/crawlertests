@@ -1,0 +1,8 @@
+title = "HTML parsing quirks"
+description = "Links written in ways the HTML parser accepts: attributes split over lines, no whitespace between attributes, a duplicated href (the first wins), a query-only href, entities in URLs, and an unquoted value ending at '>'."
+tags = ["html", "links", "precision"]
+expect = [
+  "newlines.html", "no-space.png", "first.html", "?page=2", "entity.html?a=1&b=2",
+  "numeric-entity.html", "unquoted-end.html",
+]
+expect_not = ["second.html", "entity.html?a=1&amp;b=2", "unquoted-end.html%3E"]

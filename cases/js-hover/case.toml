@@ -1,0 +1,4 @@
+title = "Hover and focus"
+description = "Resources loaded only on interaction: a CSS :hover background, an image loaded by a mouseenter handler, and a fetch triggered by focusing a search box."
+tags = ["js", "css", "browser", "interaction"]
+expect = ["hover-css.png", "hover-js.png", "suggest.json"]

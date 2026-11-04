@@ -1,0 +1,4 @@
+title = "Lazy loading below the fold"
+description = "Images far down a long page: native loading=lazy, and data-src images swapped in by an IntersectionObserver, as lazy-loading libraries do."
+tags = ["js", "browser", "scroll"]
+expect = ["native-lazy.png", "observed.png", "data-src.png"]

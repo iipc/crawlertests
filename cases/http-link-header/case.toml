@@ -1,0 +1,9 @@
+title = "Link response header"
+description = "Resources referenced only from an HTTP Link header on the page's response."
+tags = ["http", "embeds"]
+expect = ["header-preload.png", "header-style.css", "header-next.html"]
+
+[[routes]]
+path = ""
+file = "index.html"
+headers = { Link = '<header-preload.png>; rel=preload; as=image, <header-style.css>; rel=stylesheet, <header-next.html>; rel=next' }

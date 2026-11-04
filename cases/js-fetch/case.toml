@@ -1,0 +1,4 @@
+title = "fetch, XHR and dynamic import"
+description = "Resources requested by script through fetch(), XMLHttpRequest and dynamic import(), with URLs built at runtime."
+tags = ["js", "browser"]
+expect = ["api/fetch.json", "api/xhr.json", "dynamic-module.js"]

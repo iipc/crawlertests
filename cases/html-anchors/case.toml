@@ -1,0 +1,9 @@
+title = "Anchor href variants"
+description = "Plain <a href> and <area href> links written in the many ways HTML allows: relative, root-relative, absolute, protocol-relative, unquoted, with whitespace, queries and fragments."
+tags = ["html", "links"]
+expect = [
+  "relative.html", "dot-relative.html", "parent-resolved.html", "root-relative.html",
+  "absolute.html", "protocol-relative.html", "query.html?a=1&b=2", "fragment.html",
+  "whitespace.html", "uppercase-attr.html", "unquoted.html", "space%20encoded.html",
+  "entity&amp.html", "area.html", "map.png",
+]

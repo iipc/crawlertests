@@ -1,0 +1,7 @@
+title = "CSS references"
+description = "URLs in stylesheets, @import chains, @font-face, image-set(), <style> elements and style attributes."
+tags = ["css"]
+expect = [
+  "style.css", "imported.css", "from-import.png", "bg.png", "font.woff2",
+  "set-1x.png", "set-2x.png", "style-element.png", "inline.png", "unused-rule.png",
+]

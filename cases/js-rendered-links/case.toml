@@ -1,0 +1,9 @@
+title = "Links rendered from JSON"
+description = "A page that fetches a JSON list and renders it as links, like a client-side rendered app."
+tags = ["js", "browser"]
+expect = ["items.json", "item-1.html", "item-2.html", "item-3.html"]
+
+[[routes]]
+path = "items.json"
+content_type = "application/json"
+body = '{"items": [1, 2, 3]}'

@@ -1,0 +1,9 @@
+title = "Links in Flash (SWF) files"
+description = "URLs in ActionScript bytecode: getURL with relative, root-relative and javascript: URLs, getURL2 with a pushed string, a constant pool entry, a button action and an action inside a sprite. The SWFs sit next to the page so relative URLs resolve the same against either. No current browser runs Flash, so only an extractor can find these."
+tags = ["swf", "documents"]
+expect = [
+  "movie.swf", "button.swf",
+  "geturl.html", "root.html", "popup.html", "pushed.html", "pool.html", "button.html", "sprite.html",
+]
+# strings in the bytecode that aren't URLs
+expect_not = ["application/x-www-form-urlencoded", "text/xml"]

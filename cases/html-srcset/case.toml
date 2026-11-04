@@ -1,0 +1,9 @@
+title = "Responsive images (srcset)"
+description = "Includes <link imagesrcset> (heritrix3#797). A browser only loads the one srcset candidate that suits its viewport and pixel density; an archive should hold all of them so replay works on other devices."
+tags = ["html", "images", "srcset"]
+expect = [
+  "x1.png", "x2.png", "x3.png", "w400.png", "w800.png", "fallback.png",
+  "pic-wide.png", "pic-wide-2x.png", "pic-narrow.png", "pic.webp", "pic-fallback.png",
+  "comma,name.png", "nospace.png",
+  "preload-1x.png", "preload-2x.png",
+]

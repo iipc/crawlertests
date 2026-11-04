@@ -1,0 +1,21 @@
+title = "Standalone SVG document"
+description = "References from inside an SVG file loaded as a document: embeds (image, use, feImage, script, paint servers, filters, textPath, mpath, xml-stylesheet, presentation attributes, legacy font-face-uri, animate/set values), CSS in style elements and attributes, navigation links and HTML inside foreignObject. URLs resolve against the SVG's own URL. See heritrix3#796."
+tags = ["svg"]
+expect = [
+  "doc/drawing.svg",
+  # embeds
+  "doc/image.png", "doc/xlink-image.png", "doc/use.svg", "doc/feimage.png", "doc/script.js",
+  "doc/gradients.svg", "doc/patterns.svg", "doc/filters.svg", "doc/text-path.svg", "doc/motion.svg",
+  "doc/pi-style.css",
+  "doc/fill.svg", "doc/stroke.svg", "doc/clip.svg", "doc/mask.svg", "doc/marker.svg",
+  "doc/font.svg",
+  "doc/animate-1.png", "doc/animate-2.png", "doc/animate-from.png", "doc/animate-to.png", "doc/set.png",
+  # CSS
+  "doc/style-import.css", "doc/style-element.svg", "doc/style-attr.svg",
+  # navigation
+  "doc/link.html", "doc/xlink-link.html",
+  # nested HTML
+  "doc/foreign.png", "doc/foreign-link.html",
+]
+# where the same references land if resolved against the page instead
+expect_not = ["image.png", "use.svg", "link.html"]

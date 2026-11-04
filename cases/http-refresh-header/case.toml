@@ -1,0 +1,87 @@
+title = "Refresh response header"
+description = "Pages that redirect with a Refresh HTTP header rather than a status code, in each syntax browsers accept: a delay, a URL with or without the url= prefix, either separator, optional quotes and spacing, and an absolute URL. The bodies contain no links."
+tags = ["http", "redirects"]
+expect = [
+  "refresh-zero",
+  "zero.html",
+  "refresh-delayed",
+  "delayed.html",
+  "refresh-upper",
+  "upper.html",
+  "refresh-spaces",
+  "spaces.html",
+  "refresh-comma",
+  "comma.html",
+  "refresh-single-quoted",
+  "single-quoted.html",
+  "refresh-double-quoted",
+  "double-quoted.html",
+  "refresh-bare",
+  "bare.html",
+  "refresh-fractional",
+  "fractional.html",
+  "refresh-absolute",
+  "absolute.html",
+]
+# what a parser that keeps the quotes would request
+expect_not = ["'single-quoted.html'", "%22double-quoted.html%22"]
+
+[[routes]]
+path = "refresh-zero"
+content_type = "text/html; charset=utf-8"
+headers = { Refresh = "0; url=zero.html" }
+body = "<!doctype html><title>Refresh: delay 0</title>"
+
+[[routes]]
+path = "refresh-delayed"
+content_type = "text/html; charset=utf-8"
+headers = { Refresh = "2; url=delayed.html" }
+body = "<!doctype html><title>Refresh: delay 2s</title>"
+
+[[routes]]
+path = "refresh-upper"
+content_type = "text/html; charset=utf-8"
+headers = { Refresh = "0;URL=upper.html" }
+body = "<!doctype html><title>Refresh: uppercase URL, no space</title>"
+
+[[routes]]
+path = "refresh-spaces"
+content_type = "text/html; charset=utf-8"
+headers = { Refresh = "0 ; url = spaces.html" }
+body = "<!doctype html><title>Refresh: spaces around ; and =</title>"
+
+[[routes]]
+path = "refresh-comma"
+content_type = "text/html; charset=utf-8"
+headers = { Refresh = "0, url=comma.html" }
+body = "<!doctype html><title>Refresh: comma separator</title>"
+
+[[routes]]
+path = "refresh-single-quoted"
+content_type = "text/html; charset=utf-8"
+headers = { Refresh = "0; url='single-quoted.html'" }
+body = "<!doctype html><title>Refresh: single quotes</title>"
+
+[[routes]]
+path = "refresh-double-quoted"
+content_type = "text/html; charset=utf-8"
+headers = { Refresh = "0; url=\"double-quoted.html\"" }
+body = "<!doctype html><title>Refresh: double quotes</title>"
+
+[[routes]]
+path = "refresh-bare"
+content_type = "text/html; charset=utf-8"
+headers = { Refresh = "0; bare.html" }
+body = "<!doctype html><title>Refresh: no url= prefix</title>"
+
+[[routes]]
+path = "refresh-fractional"
+content_type = "text/html; charset=utf-8"
+headers = { Refresh = "0.5; url=fractional.html" }
+body = "<!doctype html><title>Refresh: fractional delay</title>"
+
+[[routes]]
+path = "refresh-absolute"
+content_type = "text/html; charset=utf-8"
+headers = { Refresh = "0; url={{ORIGIN}}/cases/http-refresh-header/absolute.html" }
+body = "<!doctype html><title>Refresh: absolute URL</title>"

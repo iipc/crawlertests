@@ -1,0 +1,24 @@
+<!doctype html>
+<title>Lazy loading</title>
+<div style="height: 6000px">Scroll down…</div>
+<img loading="lazy" src="native-lazy.png" width="10" height="10" alt="">
+<div style="height: 2000px"></div>
+<img class="lazy" data-src="data-src.png" width="10" height="10" alt="">
+<div id="sentinel" style="height: 10px"></div>
+<script>
+  const observer = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const el = entry.target;
+      if (el.dataset.src) {
+        el.src = el.dataset.src;
+      } else {
+        const img = document.createElement("img");
+        img.src = "obs" + "erved.png";
+        el.appendChild(img);
+      }
+      observer.unobserve(el);
+    }
+  });
+  document.querySelectorAll("img.lazy, #sentinel").forEach(el => observer.observe(el));
+</script>

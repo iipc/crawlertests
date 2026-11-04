@@ -1,0 +1,4 @@
+title = "iframe srcdoc"
+description = "Markup inside an iframe's srcdoc attribute, whose relative URLs resolve against the parent page."
+tags = ["html", "frames"]
+expect = ["srcdoc-img.png", "srcdoc-link.html"]

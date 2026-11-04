@@ -1,0 +1,62 @@
+# Copy to crawlertests.toml and adjust. Every setting is optional.
+
+[server]
+# The fixture server must be reachable from inside the Browsertrix container.
+# podman machine and Docker Desktop on macOS forward host.containers.internal /
+# host.docker.internal to the host's loopback, so 127.0.0.1 works there. On
+# Linux use "0.0.0.0" (the server then listens on all interfaces).
+bind = "127.0.0.1"
+# 0 picks free ports.
+port = 0
+other_port = 0
+https_port = 0
+https_other_port = 0
+
+[crawlers.heritrix]
+# A Heritrix distribution (unpacked heritrix-*-dist.tar.gz). Defaults to $HERITRIX_HOME.
+# home = "~/src/heritrix3/dist/target/heritrix-3.18.1-SNAPSHOT"
+# java_opts = "-Xmx2g"
+# threads = 8
+timeout = 1800
+# Extractors to add to the fetch chain after the profile's own. The stock
+# profile has no ExtractorPDF, for example.
+# extractors = ["org.archive.modules.extractor.ExtractorPDF"]
+# Extra PropertyOverrideConfigurer settings, applied after the harness defaults.
+# [crawlers.heritrix.overrides]
+# "extractorHtml.extractValueAttributes" = "false"
+
+[crawlers.heritrix-strict-js]
+# Heritrix with ConfigurableExtractorJS in place of ExtractorJS, for script
+# files and inline scripts alike. Strict mode only extracts absolute URLs from
+# JavaScript. Other ConfigurableExtractorJS properties can be set here too, and
+# "class" swaps in a different extractor.
+type = "heritrix"
+extractor_js = { strict = true }
+
+[crawlers.heritrix-browser]
+# Inherits 'home' from [crawlers.heritrix]. The BrowserProcessor launches this
+# executable over WebDriver BiDi: Firefox directly, or a chromedriver for Chrome.
+# Defaults to the macOS Firefox.app if present, otherwise Heritrix's own search.
+# executable = "/Applications/Firefox.app/Contents/MacOS/firefox"
+# options = ["-headless"]
+# browser_concurrency = 4
+# behaviors = [
+#   "org.archive.modules.behaviors.ScrollDownBehavior",
+#   "org.archive.modules.behaviors.ExtractLinksBehavior",
+# ]
+
+[crawlers.browsertrix]
+# engine = "podman"   # or "docker"; autodetected
+image = "docker.io/webrecorder/browsertrix-crawler:latest"
+workers = 4
+# extra_args = ["--behaviors", "autoscroll,autoplay,autofetch,siteSpecific"]
+
+# More crawlers can be added by name, with a 'type' of heritrix,
+# heritrix-browser or browsertrix, e.g. to compare two versions:
+# [crawlers.heritrix-chrome]
+# type = "heritrix-browser"
+# executable = "/opt/homebrew/bin/chromedriver"
+# options = []
+# [crawlers.browsertrix-1-6]
+# type = "browsertrix"
+# image = "docker.io/webrecorder/browsertrix-crawler:1.6.0"

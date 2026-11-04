@@ -1,0 +1,12 @@
+<!doctype html>
+<title>srcset</title>
+<link rel="preload" as="image" imagesrcset="preload-1x.png 1x, preload-2x.png 2x">
+<img src="fallback.png" srcset="x1.png 1x, x2.png 2x, x3.png 3x" alt="">
+<img srcset="w400.png 400w, w800.png 800w" sizes="(max-width: 600px) 400px, 800px" alt="">
+<picture>
+  <source media="(min-width: 2000px)" srcset="pic-wide.png, pic-wide-2x.png 2x">
+  <source media="(max-width: 10px)" srcset="pic-narrow.png">
+  <source type="image/webp" srcset="pic.webp">
+  <img src="pic-fallback.png" alt="">
+</picture>
+<img srcset="comma,name.png 1x,nospace.png 2x" alt="">

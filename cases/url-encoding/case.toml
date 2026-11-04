@@ -1,0 +1,19 @@
+title = "Non-ASCII URLs and page encodings"
+description = "Non-ASCII characters in link paths and queries. Browsers percent-encode the path as UTF-8 but the query in the page's own encoding, so the same query is encoded differently on UTF-8, windows-1252 and Shift_JIS pages."
+tags = ["html", "encoding"]
+expect = [
+  "utf8/caf%C3%A9.html", "utf8/%E6%97%A5%E6%9C%AC.html", "utf8/search?q=caf%C3%A9",
+  "latin1/", "latin1/caf%C3%A9.html", "latin1/search?q=caf%E9",
+  "sjis/", "sjis/%E6%97%A5%E6%9C%AC.html", "sjis/search?q=%93%FA%96%7B",
+]
+expect_not = ["latin1/search?q=caf%C3%A9", "sjis/search?q=%E6%97%A5%E6%9C%AC", "latin1/caf%E9.html"]
+
+[[routes]]
+path = "latin1/"
+file = "latin1.html"
+content_type = "text/html; charset=windows-1252"
+
+[[routes]]
+path = "sjis/"
+file = "sjis.html"
+content_type = "text/html; charset=Shift_JIS"

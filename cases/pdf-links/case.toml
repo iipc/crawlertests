@@ -1,0 +1,9 @@
+title = "Links in PDF documents"
+description = "Links inside a PDF: absolute and relative URI actions on link annotations, a GoToR action pointing at another PDF, a URI action on a bookmark (outline item), and a URL written in the page text, which PDF viewers turn into a link. Relative references resolve against the PDF's own URL."
+tags = ["pdf", "documents"]
+expect = [
+  "docs/doc.pdf", "docs/absolute.html", "docs/relative.html", "docs/other.pdf",
+  "docs/outline.html", "docs/text-url.html",
+]
+# where the relative references land if resolved against the page instead
+expect_not = ["relative.html", "other.pdf"]

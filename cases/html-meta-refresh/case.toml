@@ -1,0 +1,4 @@
+title = "Meta refresh"
+description = "<meta http-equiv=refresh> redirects, which a browser follows by navigating away from the page."
+tags = ["html", "redirects"]
+expect = ["refreshed.html"]

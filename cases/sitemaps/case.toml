@@ -1,0 +1,19 @@
+title = "Sitemaps"
+description = "Pages reachable only through sitemaps: a sitemap index named in robots.txt pointing at an XML sitemap (with image and hreflang extensions) and a gzipped sitemap, and a plain-text sitemap also named in robots.txt. The seed page has no links."
+tags = ["sitemaps", "robots"]
+robots = """
+Sitemap: {{ORIGIN}}/cases/sitemaps/sitemap-index.xml
+Sitemap: {{ORIGIN}}/cases/sitemaps/sitemap.txt
+"""
+expect = [
+  "/robots.txt",
+  "sitemap-index.xml", "sitemap-pages.xml", "sitemap-news.xml.gz", "sitemap.txt",
+  "page-1.html", "page-1-fr.html", "page-2.html", "image-1.png",
+  "from-gzipped-sitemap.html", "from-text-sitemap.html",
+]
+
+[[routes]]
+path = "sitemap-news.xml.gz"
+file = "sitemap-news.xml"
+gzip_body = true
+content_type = "application/gzip"

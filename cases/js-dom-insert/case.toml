@@ -1,0 +1,4 @@
+title = "DOM inserted by script"
+description = "An image and a link created by JavaScript from concatenated strings, so they only exist once the script runs."
+tags = ["js", "browser"]
+expect = ["dom-img.png", "dom-link.html", "written-img.png"]

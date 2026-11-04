@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="pi-style.css" type="text/css"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="400" height="400">
+  <style>
+    @import url("style-import.css");
+    .styled { fill: url(style-element.svg#paint); }
+  </style>
+  <script href="script.js"/>
+
+  <defs>
+    <linearGradient id="grad" href="gradients.svg#base"/>
+    <pattern id="pat" href="patterns.svg#base"/>
+    <filter id="ref-filter" href="filters.svg#base"/>
+    <filter id="fe"><feImage href="feimage.png"/></filter>
+    <font-face font-family="LegacyFont">
+      <font-face-src><font-face-uri xlink:href="font.svg#font"/></font-face-src>
+    </font-face>
+  </defs>
+
+  <image href="image.png" width="10" height="10"/>
+  <image xlink:href="xlink-image.png" x="20" width="10" height="10"/>
+  <use href="use.svg#icon" x="40"/>
+  <rect x="60" width="10" height="10" filter="url(#fe)"/>
+  <rect x="80" width="10" height="10" fill="url(fill.svg#paint)" stroke="url(stroke.svg#paint)"
+        clip-path="url(clip.svg#clip)" mask="url(mask.svg#mask)"/>
+  <path d="M0 50 L50 50" marker-end="url(marker.svg#arrow)"/>
+  <rect class="styled" y="20" width="10" height="10"/>
+  <rect x="20" y="20" width="10" height="10" style="fill: url(style-attr.svg#paint)"/>
+  <text y="80"><textPath href="text-path.svg#curve">Text on a path</textPath></text>
+  <circle r="5"><animateMotion dur="1s"><mpath href="motion.svg#path"/></animateMotion></circle>
+  <image y="100" width="10" height="10" href="animate-from.png">
+    <animate attributeName="href" values="animate-1.png;animate-2.png" dur="1s" repeatCount="indefinite"/>
+  </image>
+  <image y="120" width="10" height="10">
+    <animate attributeName="href" from="animate-from.png" to="animate-to.png" dur="1s"/>
+  </image>
+  <image y="140" width="10" height="10">
+    <set attributeName="href" to="set.png" begin="0s"/>
+  </image>
+
+  <a href="link.html"><text y="180">SVG 2 link</text></a>
+  <a xlink:href="xlink-link.html"><text y="200">SVG 1.1 link</text></a>
+
+  <foreignObject y="220" width="200" height="100">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <img src="foreign.png" alt=""/>
+      <a href="foreign-link.html">HTML link inside SVG</a>
+    </div>
+  </foreignObject>
+</svg>

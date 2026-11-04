@@ -1,0 +1,11 @@
+<!doctype html>
+<title>Cookies</title>
+<body>
+<img src="protected.png" alt="">
+<a href="protected-page.html">members page</a>
+<script>
+  document.cookie = "scripted=1; path=/cases/cookie-subresources/";
+  const img = document.createElement("img");
+  img.src = "js-protected.png";
+  document.body.append(img);
+</script>

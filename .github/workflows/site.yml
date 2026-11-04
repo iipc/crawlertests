@@ -1,0 +1,55 @@
+# Build the results website from the results branch and publish it to GitHub Pages.
+# Rebuilt when the tests change, since every saved run is re-scored against them.
+
+name: site
+
+on:
+  push:
+    branches: [main]
+    paths: [cases/**, src/**, .github/workflows/site.yml]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10
+
+      - name: Get results
+        run: |
+          mkdir -p results
+          if git ls-remote --exit-code origin results >/dev/null; then
+            git fetch -q --depth 1 origin results
+            git worktree add results FETCH_HEAD
+          fi
+
+      - name: Build
+        run: uv run crawlertests site results -o _site
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
