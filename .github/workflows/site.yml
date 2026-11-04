@@ -24,6 +24,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          # the latest tests and site code, even when called from a crawl that started on an older commit
+          ref: main
 
       - uses: astral-sh/setup-uv@v10.3.0
 
