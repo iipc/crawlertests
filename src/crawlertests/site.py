@@ -35,6 +35,13 @@ nav { display: flex; gap: 16px; flex-wrap: wrap; margin: 0 0 16px; font-size: 14
 th.run { font-weight: normal; font-size: 12px; white-space: nowrap; }
 td.changed { box-shadow: inset 0 0 0 2px var(--fg); }
 select { font: inherit; max-width: 100%; }
+.switch { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin: 8px 0 0; }
+.switch input { position: absolute; opacity: 0; pointer-events: none; }
+.switch label { padding: 6px 14px; cursor: pointer; background: var(--card); color: var(--muted); }
+.switch label + input + label { border-left: 1px solid var(--line); }
+.switch input:checked + label { background: var(--accent); color: var(--bg); }
+.switch input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: -4px; }
+body:has(#view-release:checked) .view-dev, body:has(#view-dev:checked) .view-release { display: none; }
 .pickers { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px 16px; }
 """
 
@@ -125,29 +132,72 @@ def _retitle(results: dict, title: str, intro: str) -> str:
     return page(title, body, root="../../")
 
 
+def _views(series) -> dict[str, list[str]]:
+    """The series shown in each view of the home page: per crawler, its releases, or its development builds
+    where it has them (and its releases otherwise). A crawler with a single track shows it in both."""
+    by_crawler = defaultdict(dict)
+    for slug, rs in series.items():
+        by_crawler[rs[0]["crawler"]][rs[0].get("track") or "local"] = slug
+    views = {"release": [], "dev": []}
+    for crawler in sorted(by_crawler):
+        tracks = by_crawler[crawler]
+        non_dev = sorted(t for t in tracks if t != "dev")
+        release = tracks.get("release") or (tracks[non_dev[0]] if non_dev else tracks["dev"])
+        views["release"].append(release)
+        views["dev"].append(tracks.get("dev", release))
+    return views
+
+
 def _write_index(out: Path, cases, series, slugs, scored):
-    latest = [series[s][-1] for s in slugs]
-    results = results_for([(series_label(r), r) for r in latest], cases, "latest")
-    by_label = {series_label(r): r for r in latest}
+    views = _views(series)
+    crawlers = sorted({rs[0]["crawler"] for rs in series.values()})
+    colors = {c: SERIES_COLORS[i % len(SERIES_COLORS)] for i, c in enumerate(crawlers)}
+    toggle = views["release"] != views["dev"]
+    sections = []
+    for view, view_slugs in views.items():
+        if not view_slugs or (view == "dev" and not toggle):
+            break
+        sections.append(f'<div class="view view-{view}">{_view(series, view_slugs, cases, scored, colors)}</div>')
+    if toggle:
+        switch = """<div class="switch" role="radiogroup" aria-label="Crawler versions">
+<input type="radio" name="view" id="view-release" value="release" checked><label for="view-release">Releases</label>
+<input type="radio" name="view" id="view-dev" value="dev"><label for="view-dev">Development builds</label>
+</div>
+<p class="desc">Development builds are shown for crawlers that have them, and the latest release for the others.</p>"""
+        script = """<script>
+// keep the chosen view in the URL, so it survives reloads and can be linked to
+const radios = document.querySelectorAll('input[name="view"]');
+if (location.hash === "#dev") document.getElementById("view-dev").checked = true;
+for (const r of radios) r.addEventListener("change", () => history.replaceState(null, "", r.value === "dev" ? "#dev" : location.pathname));
+</script>"""
+    else:
+        switch = script = ""
+    body = f"""<h1>Web archiving crawler tests</h1>
+<nav><a href="compare.html">compare runs</a>
+<a href="{SOURCE}">test suite</a></nav>
+<p class="desc">How well web archiving crawlers discover and capture the resources of a set of small test sites.
+Every run is scored against the current version of the tests, so scores are comparable across time.</p>
+{switch}
+{''.join(sections) if series else '<p class="desc">No runs yet.</p>'}
+{script}
+"""
+    (out / "index.html").write_text(page("Crawler tests", body, root="./"))
+
+
+def _view(series, view_slugs, cases, scored, colors) -> str:
+    latest = [series[s][-1] for s in view_slugs]
+    results = results_for([(r["crawler"], r) for r in latest], cases, "latest")
+    by_label = {r["crawler"]: r for r in latest}
     columns = [
         ("version", lambda label, info: _e(version_label(by_label[label]))),
         ("date", lambda label, info: _e(record_date(by_label[label]).date().isoformat())),
         ("", lambda label, info: f'<a href="history/{_e(series_slug(by_label[label]))}.html">history</a> · '
                                  f'<a href="runs/{_e(by_label[label]["run"])}/index.html">report</a>'),
     ]
-    if latest:
-        chart = _chart(series, slugs, scored)
-        matrix = cases_table(results, case_link=lambda name: f"{SOURCE}/tree/main/cases/{name}",
-                             cell_link=lambda name, label: f"runs/{by_label[label]['run']}/index.html#{name}")
-    else:
-        chart = matrix = '<p class="desc">No runs yet.</p>'
-    body = f"""<h1>Web archiving crawler tests</h1>
-<nav><a href="compare.html">compare runs</a>
-<a href="{SOURCE}">test suite</a></nav>
-<p class="desc">How well web archiving crawlers discover and capture the resources of a set of small test sites.
-Every run is scored against the current version of the tests, so scores are comparable across time.</p>
-
-<h2>Latest results</h2>
+    chart = _chart(series, view_slugs, scored, colors)
+    matrix = cases_table(results, case_link=lambda name: f"{SOURCE}/tree/main/cases/{name}",
+                         cell_link=lambda name, label: f"runs/{by_label[label]['run']}/index.html#{name}")
+    return f"""<h2>Latest results</h2>
 {scores_table(results, columns)}
 
 <h2>Score over time</h2>
@@ -156,10 +206,9 @@ Every run is scored against the current version of the tests, so scores are comp
 <h2>Cases</h2>
 {matrix}
 """
-    (out / "index.html").write_text(page("Crawler tests", body, root="./"))
 
 
-def _chart(series, slugs, scored) -> str:
+def _chart(series, slugs, scored, colors: dict[str, str]) -> str:
     width, height, left, right, top, bottom = 900, 320, 44, 16, 12, 28
     points = {s: [(record_date(r), scored[(r["run"], r["crawler"])][1], r) for r in series[s]] for s in slugs}
     dates = [d for ps in points.values() for d, _, _ in ps]
@@ -185,20 +234,21 @@ def _chart(series, slugs, scored) -> str:
         parts.append(f'<text x="{tx:.1f}" y="{height - 8}" text-anchor="middle">{label}</text>')
 
     legend = []
-    for i, s in enumerate(slugs):
-        color = SERIES_COLORS[i % len(SERIES_COLORS)]
+    for s in slugs:
+        crawler = series[s][-1]["crawler"]
+        color = colors[crawler]
         ps = points[s]
         coords = [(x(d), y(sc["hits"] / sc["total"] if sc["total"] else 0)) for d, sc, _ in ps]
         if len(coords) > 1:
             path = " ".join(f"{cx:.1f},{cy:.1f}" for cx, cy in coords)
             parts.append(f'<polyline points="{path}" fill="none" stroke="{color}" stroke-width="2"/>')
         for (cx, cy), (d, sc, r) in zip(coords, ps):
-            tip = (f"{series_label(r)} {version_label(r)} ({d.date()})\nscore {_ratio(sc['hits'], sc['total'])}, "
+            tip = (f"{crawler} {version_label(r)} ({d.date()})\nscore {_ratio(sc['hits'], sc['total'])}, "
                    f"captured {_ratio(sc['captured'], sc['expected'])}, "
                    f"overcrawled {_ratio(sc['overcrawled'], sc['unexpected'])}")
             parts.append(f'<a href="runs/{_e(r["run"])}/index.html"><circle cx="{cx:.1f}" cy="{cy:.1f}" r="4" '
                          f'fill="{color}"><title>{_e(tip)}</title></circle></a>')
-        legend.append(f'<span style="--c: {color}">{_e(series_label(series[s][-1]))}</span>')
+        legend.append(f'<span style="--c: {color}">{_e(crawler)}</span>')
     svg = (f'<svg class="chart" viewBox="0 0 {width} {height}" role="img" aria-label="Score over time">'
            + "".join(parts) + "</svg>")
     return (f'<div class="legend">{"".join(legend)}</div>{svg}'
