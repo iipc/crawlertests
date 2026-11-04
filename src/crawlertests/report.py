@@ -74,13 +74,17 @@ def _cell_text(r: dict) -> str:
 
 
 def _cell_class(r: dict) -> str:
-    """Coloured by the share of expected URLs captured; overcrawling is shown as +N but doesn't change it."""
+    """Coloured by the share of expected URLs captured, lowered by overcrawling to the share of all the case's
+    expectations met (avoiding bad URLs never raises it). So a cell is only green when the case fully passes,
+    a case about overcrawling (one control link and many expect_not URLs) still shows it, and a crawler that
+    captured nothing is red."""
     captured, expected = _captured(r)
-    if captured == expected:
+    rate = min(captured / expected if expected else 1.0, r["hits"] / r["total"] if r["total"] else 1.0)
+    if rate == 1.0:
         return "passes-all"
-    if captured == 0:
+    if rate == 0:
         return "passes-none"
-    return "passes-" + next(name for limit, name in PASS_BUCKETS if captured / expected < limit)
+    return "passes-" + next(name for limit, name in PASS_BUCKETS if rate < limit)
 
 
 STYLE = """
@@ -88,7 +92,7 @@ STYLE = """
   --bg: #fbfbfa; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e1dc; --card: #ffffff;
   --pass: #1f7a3e; --pass-bg: #e6f4ea; --fail: #b3261e; --fail-bg: #fbe9e7; --accent: #2f5fb3;
   --passes-none: #e57373; --passes-hardly: #ffb74d; --passes-a-few: #ffd54f; --passes-half: #fff176;
-  --passes-lots: #dce775; --passes-most: #aed581; --passes-all: #81c784;
+  --passes-lots: #dce775; --passes-most: #aed581; --passes-all: #81c784; --over-bg: #a3201a;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -125,7 +129,8 @@ section.case { border-top: 1px solid var(--line); margin-top: 24px; }
 ul { margin: 4px 0; padding-left: 20px; }
 td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .note { text-decoration: none; margin-left: 2px; }
-.over { font-size: 12px; font-weight: 600; margin-left: 6px; }
+.over { font-size: 11px; font-weight: 700; margin-left: 6px; padding: 0 5px; border-radius: 8px;
+        background: var(--over-bg); color: #fff; }
 """
 
 
@@ -179,7 +184,7 @@ def scores_table(results: dict, extra_columns=None) -> str:
 </table></div>
 <p class="desc"><b>Captured</b>: URLs a case expects that were captured.
 <b>Overcrawled</b>: URLs captured that a case says shouldn't be (<code>expect_not</code>).
-<b>Accuracy</b>: expectations met, counting both. In the case table, each cell shows the expected URLs captured and is coloured by that share; +N is the number overcrawled.</p>
+<b>Accuracy</b>: expectations met, counting both. In the case table, each cell shows the expected URLs captured, and a red +N the number overcrawled. Its colour is the share captured, lowered by overcrawling to the share of all the case's expectations met, so only a case that fully passes is green.</p>
 {notes}"""
 
 
