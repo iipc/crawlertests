@@ -3,8 +3,8 @@
 Every record is re-scored against the current cases, so the whole history
 reflects today's expectations. Pages:
 
-  index.html                       latest result for each crawler and track, scores over time
-  history/<crawler>--<track>.html  each case's result across that crawler's runs
+  index.html                       latest result for each crawler, scores over time
+  history/<crawler>.html           each case's result across that crawler's runs
   runs/<run>/index.html            the full report for one run
   compare.html                     expectations that differ between two runs (reads data/)
 """
@@ -35,37 +35,17 @@ nav { display: flex; gap: 16px; flex-wrap: wrap; margin: 0 0 16px; font-size: 14
 th.run { font-weight: normal; font-size: 12px; white-space: nowrap; }
 td.changed { box-shadow: inset 0 0 0 2px var(--fg); }
 select { font: inherit; max-width: 100%; }
-.switch { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin: 8px 0 0; }
-.switch input { position: absolute; opacity: 0; pointer-events: none; }
-.switch label { padding: 6px 14px; cursor: pointer; background: var(--card); color: var(--muted); }
-.switch label + input + label { border-left: 1px solid var(--line); }
-.switch input:checked + label { background: var(--accent); color: var(--bg); }
-.switch input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: -4px; }
-body:has(#view-release:checked) .view-dev, body:has(#view-dev:checked) .view-release { display: none; }
 .pickers { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px 16px; }
 """
 
 
 def series_slug(record: dict) -> str:
-    return f"{record['crawler']}--{record.get('track') or 'local'}"
+    """One series per crawler: its releases and development builds together, in date order."""
+    return record["crawler"]
 
 
 def series_label(record: dict) -> str:
-    return record.get("_label") or record["crawler"]
-
-
-def _label_series(series: dict[str, list[dict]]):
-    """Name each series after its crawler, adding the track only to tell apart tracks of the same crawler:
-    "heritrix" for releases (or the only track), "heritrix (dev)" for development builds."""
-    tracks = defaultdict(set)
-    for rs in series.values():
-        tracks[rs[0]["crawler"]].add(rs[0].get("track") or "local")
-    for rs in series.values():
-        crawler, track = rs[0]["crawler"], rs[0].get("track") or "local"
-        others = tracks[crawler] - {track}
-        plain = not others or (track == "release" and len(tracks[crawler]) > 1)
-        for r in rs:
-            r["_label"] = crawler if plain else f"{crawler} ({track})"
+    return record["crawler"]
 
 
 def version_label(record: dict) -> str:
@@ -113,7 +93,6 @@ def build_site(results_dir: Path, cases: dict[str, Case], out: Path, repo: Path 
         series[series_slug(r)].append(r)
     for rs in series.values():
         rs.sort(key=lambda r: (record_date(r), r.get("time") or ""))
-    _label_series(series)
     slugs = sorted(series, key=lambda s: series_label(series[s][-1]))
 
     _write_index(out, cases, series, slugs, scored)
@@ -142,55 +121,15 @@ def _retitle(results: dict, title: str, intro: str) -> str:
     return page(title, body, root="../../")
 
 
-def _views(series) -> dict[str, list[str]]:
-    """The series shown in each view of the home page: per crawler, its releases, or its development builds
-    where it has them (and its releases otherwise). A crawler with a single track shows it in both."""
-    by_crawler = defaultdict(dict)
-    for slug, rs in series.items():
-        by_crawler[rs[0]["crawler"]][rs[0].get("track") or "local"] = slug
-    views = {"release": [], "dev": []}
-    for crawler in sorted(by_crawler):
-        tracks = by_crawler[crawler]
-        non_dev = sorted(t for t in tracks if t != "dev")
-        release = tracks.get("release") or (tracks[non_dev[0]] if non_dev else tracks["dev"])
-        views["release"].append(release)
-        views["dev"].append(tracks.get("dev", release))
-    return views
-
-
 def _write_index(out: Path, cases, series, slugs, scored):
-    views = _views(series)
-    crawlers = sorted({rs[0]["crawler"] for rs in series.values()})
-    colors = {c: SERIES_COLORS[i % len(SERIES_COLORS)] for i, c in enumerate(crawlers)}
-    toggle = views["release"] != views["dev"]
-    sections = []
-    for view, view_slugs in views.items():
-        if not view_slugs or (view == "dev" and not toggle):
-            break
-        sections.append(f'<div class="view view-{view}">{_view(series, view_slugs, cases, scored, colors)}</div>')
-    if toggle:
-        switch = """<div class="switch" role="radiogroup" aria-label="Crawler versions">
-<input type="radio" name="view" id="view-release" value="release" checked><label for="view-release">Releases</label>
-<input type="radio" name="view" id="view-dev" value="dev"><label for="view-dev">Development builds</label>
-</div>
-<p class="desc">Development builds are shown for crawlers that have them, and the latest release for the others.</p>"""
-        script = """<script>
-// keep the chosen view in the URL, so it survives reloads and can be linked to
-const radios = document.querySelectorAll('input[name="view"]');
-if (location.hash === "#dev") document.getElementById("view-dev").checked = true;
-for (const r of radios) r.addEventListener("change", () => history.replaceState(null, "", r.value === "dev" ? "#dev" : location.pathname));
-</script>"""
-    else:
-        switch = script = ""
+    colors = {c: SERIES_COLORS[i % len(SERIES_COLORS)] for i, c in enumerate(slugs)}
     body = f"""<h1>Web archiving crawler tests</h1>
 <nav><a href="compare.html">compare runs</a>
 <a href="{SOURCE}">test suite</a></nav>
 <p class="desc">How well web archiving crawlers discover and capture the resources of a set of small test sites.
 Saved runs are re-scored whenever the expected results change. A run only covers the cases that existed
 when it was crawled, so the chart compares runs on the cases they all share.</p>
-{switch}
-{''.join(sections) if series else '<p class="desc">No runs yet.</p>'}
-{script}
+{_view(series, slugs, cases, scored, colors) if series else '<p class="desc">No runs yet.</p>'}
 """
     (out / "index.html").write_text(page("Crawler tests", body, root="./"))
 
@@ -253,7 +192,7 @@ def _chart(series, slugs, scored, colors: dict[str, str], case_count: int) -> st
     legend = []
     for s in slugs:
         crawler = series[s][-1]["crawler"]
-        color = colors[crawler]
+        color = colors[s]
         ps = points[s]
         coords = [(x(d), y(sc["hits"] / sc["total"] if sc["total"] else 0)) for d, sc, _ in ps]
         if len(coords) > 1:
@@ -263,15 +202,18 @@ def _chart(series, slugs, scored, colors: dict[str, str], case_count: int) -> st
             tip = (f"{crawler} {version_label(r)} ({d.date()})\naccuracy {_ratio(sc['hits'], sc['total'])}, "
                    f"captured {_ratio(sc['captured'], sc['expected'])}, "
                    f"overcrawled {_ratio(sc['overcrawled'], sc['unexpected'])}")
+            fill = (f'fill="var(--card)" stroke="{color}" stroke-width="2"' if r.get("track") == "dev"
+                    else f'fill="{color}"')
             parts.append(f'<a href="runs/{_e(r["run"])}/index.html"><circle cx="{cx:.1f}" cy="{cy:.1f}" r="4" '
-                         f'fill="{color}"><title>{_e(tip)}</title></circle></a>')
+                         f'{fill}><title>{_e(tip)}</title></circle></a>')
         legend.append(f'<span style="--c: {color}">{_e(crawler)}</span>')
     svg = (f'<svg class="chart" viewBox="0 0 {width} {height}" role="img" aria-label="Accuracy over time">'
            + "".join(parts) + "</svg>")
     return (f'<div class="legend">{"".join(legend)}</div>{svg}'
             f'<p class="desc">Expectations met on the {len(shared)} of {case_count} cases that every run shown crawled'
             f'{", so newer cases don't count until older versions are re-crawled" if len(shared) < case_count else ""}. '
-            'Points are placed at the date of the crawler version (or of the run, for local runs). '
+            'Points are placed at the date of the crawler version (or of the run, for local runs); '
+            'hollow points are development builds. '
             'Hover a point for details; click it for the run report.</p>')
 
 
