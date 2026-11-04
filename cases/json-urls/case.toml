@@ -1,0 +1,9 @@
+title = "URLs in JSON"
+description = "A page links to a JSON document and fetches another; the URLs are only in the JSON, as string values: absolute, root-relative and relative, in nested objects, in arrays, in arrays of arrays, and in a document whose top level is an array. The page never uses them. A MIME type string must not be taken for a link. Heritrix 3.13.0 added ExtractorJson (not in the stock profile) and 3.18.0 made it look inside nested arrays."
+tags = ["json", "links"]
+expect = [
+  "feed.json", "list.json",
+  "absolute.html", "root-relative.png", "relative.html", "in-object.html",
+  "in-array.html", "in-array-object.html", "nested-array.html", "top-level-array.html",
+]
+expect_not = ["application/json"]

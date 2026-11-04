@@ -1,0 +1,9 @@
+title = "robots.txt end anchor"
+description = "robots.txt rules using the $ end-of-path anchor from RFC 9309: one disallows every URL ending in .pdf, another a single page. URLs that only start with the same text, or add a query string, stay allowed. Heritrix 3.10.0 implemented RFC 9309 matching."
+tags = ["robots", "host-root"]
+robots = """
+Disallow: /cases/robots-txt-end-anchor/*.pdf$
+Disallow: /cases/robots-txt-end-anchor/exact.html$
+"""
+expect = ["/robots.txt", "report.pdf?download=1", "report.pdf.html", "exact.html?page=2", "exact.html5"]
+expect_not = ["report.pdf", "files/manual.pdf", "exact.html"]

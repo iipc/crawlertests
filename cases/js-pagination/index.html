@@ -1,0 +1,21 @@
+<!doctype html>
+<title>Pagination</title>
+<ul id="list"></ul>
+<button title="Next" id="next">Next</button>
+<script>
+  var page = 1, perPage = 3, pages = 3;
+  function render() {
+    var list = document.getElementById("list");
+    list.innerHTML = "";
+    for (var i = (page - 1) * perPage + 1; i <= page * perPage; i++) {
+      var li = document.createElement("li");
+      li.innerHTML = '<a href="item-' + i + '.html">Item ' + i + '</a>';
+      list.appendChild(li);
+    }
+    document.getElementById("next").disabled = page >= pages;
+  }
+  document.getElementById("next").addEventListener("click", function () {
+    if (page < pages) { page++; render(); }
+  });
+  render();
+</script>

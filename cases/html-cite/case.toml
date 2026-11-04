@@ -1,0 +1,4 @@
+title = "cite attributes"
+description = "Source URLs in the cite attribute of <blockquote>, <q>, <del> and <ins>. Browsers never fetch them, but they name the page being quoted or the change's rationale. Heritrix 3.5.0 treats cite as a navigation link rather than an embed."
+tags = ["html", "links"]
+expect = ["blockquote-source.html", "q-source.html", "del-reason.html", "ins-reason.html"]

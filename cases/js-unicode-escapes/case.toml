@@ -1,0 +1,4 @@
+title = "Unicode escapes in script strings"
+description = "Script strings whose URLs are written with escapes the crawler must decode: classic \\uXXXX escapes, ES2015 code-point escapes \\u{...} (including an escaped slash), and a URL inside a JSON string whose quotes are written as \\u0022. The script adds each as a link. Heritrix 3.18.0 decodes \\u{...} escapes in ExtractorJS."
+tags = ["js", "links"]
+expect = ["classic.html", "code-point.html", "code-point-dir/page.html", "json-quoted.html"]

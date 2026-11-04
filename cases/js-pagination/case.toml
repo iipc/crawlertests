@@ -1,0 +1,4 @@
+title = "Client-side pagination"
+description = "A list rendered by script, three pages long, stepped through with a Next button that replaces the list and is disabled on the last page. Reaching the page-3 links takes two clicks. The button is <button title=\"Next\">, the default selector of Heritrix's PaginationBehavior (3.16.0)."
+tags = ["js", "browser", "interaction"]
+expect = ["item-1.html", "item-4.html", "item-7.html", "item-9.html"]
