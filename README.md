@@ -17,6 +17,7 @@ Crawlers supported so far:
 | `browsertrix`      | Browsertrix Crawler in a podman or docker container         |
 | `zeno`             | Zeno, the Internet Archive's Go crawler                     |
 | `stormcrawler`     | Apache StormCrawler with its WARC module, as a local-mode Storm topology |
+| `ccnutch`          | Common Crawl's fork of Apache Nutch, set up as in cc-nutch-example, in a container |
 
 ## Quick start
 
@@ -79,7 +80,8 @@ On GitHub, the `crawl` workflow runs nightly: the latest releases of Heritrix,
 Browsertrix Crawler, Zeno and StormCrawler ("release" track), Heritrix built
 from its default branch ("dev" track), and the latest Heritrix release with
 Penumbra from its default branch (`heritrix-penumbra`'s "dev" track, whose
-revision and date are Penumbra's). It saves new records to the `results` branch and
+revision and date are Penumbra's), and Common Crawl's Nutch fork built from its
+default branch (`ccnutch`'s "dev" track; the image is kept in the Actions cache). It saves new records to the `results` branch and
 rebuilds the site on GitHub Pages; the `site` workflow also rebuilds it when
 the cases change. The nightly run also re-crawls the stale cases of up to 8
 saved releases (newest first), so after the cases change older versions catch
@@ -273,6 +275,27 @@ false for just the archetype's frames), since the jsoup parser only follows
 outside the seed prefixes is fetched. robots.txt is obeyed, and okhttp trusts
 any certificate. Only 2xx responses reach the WARC bolt, so redirects and
 errors aren't archived; nor is robots.txt.
+
+**Common Crawl Nutch.** Common Crawl's fork of Nutch, as described by
+[cc-nutch-example](https://github.com/commoncrawl/cc-nutch-example). The fork
+has no releases, so the harness builds an image (`src/crawlertests/crawlers/ccnutch/Dockerfile`)
+following the example's steps: crawler-commons and the CLD2 language detector
+from source, then `ant runtime` of the fork's `cc` branch. Branches are resolved
+to commits before building, so the image is rebuilt only when one moves. The
+crawl is the example's `crawl.sh` (a copy with marked changes) in Hadoop local
+mode: inject, then `rounds` cycles of generate, fetch with parsing and WARC
+writing, and updatedb, stopping early when there's nothing left to generate.
+The configuration is the example's `nutch-site.xml`, read from the image, with
+an agent name, no politeness delay, and the seeds as the prefix URL filter (the
+default accepts any http(s) URL); the fetch lists are larger than the
+example's 100 URLs per host, since every case is on the same host. Everything
+else is Common Crawl's or Nutch's defaults, including the URL filters behind
+Common Crawl's text-oriented crawl: the suffix and regex filters skip images,
+CSS, JavaScript and other non-text files, and the regex filter skips any URL
+with `?`, `=`, `*`, `!` or `@`. Nutch doesn't tell embeds from links, so
+nothing outside the seed prefixes is fetched. robots.txt is obeyed (and
+archived), and okhttp doesn't check certificates. Redirects and errors go to
+separate "crawldiagnostics" WARCs, which the harness reads too.
 
 **Browsertrix.** Runs `browsertrix-crawler crawl --scopeType prefix
 --useRobots --useSitemap` with all case seeds (set `use_robots` or

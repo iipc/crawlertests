@@ -2,7 +2,7 @@
 
 Reads the workflow_dispatch inputs from the environment. With no inputs (the
 nightly run) it runs the latest releases, the Heritrix development build and
-Heritrix with Penumbra from its default branch, in full. It also re-crawls
+Heritrix with Penumbra and Common Crawl's Nutch from their default branches, in full. It also re-crawls
 saved releases that have stale cases (new cases, changed fixtures or a harness
 version bump; see `crawlertests stale`), crawling only those cases and at most
 BUDGET versions a night, newest first, so a big change catches up over a few
@@ -43,6 +43,7 @@ else:
         {"job": "browsertrix", "version": "", "java": ""},
         {"job": "zeno", "version": "", "java": ""},
         {"job": "stormcrawler", "version": "", "java": java or "21"},
+        {"job": "ccnutch", "version": "", "java": ""},
     ]
     if os.path.isdir("results"):
         stale = json.loads(subprocess.run(["crawlertests", "stale", "results"], check=True, capture_output=True,
