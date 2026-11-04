@@ -32,13 +32,15 @@ class Browsertrix(Crawler):
             info["version"] = m.group(1)
         image = self.config.get("image", DEFAULT_IMAGE)
         out = subprocess.run([self.engine, "image", "inspect", image, "--format",
-                              '{{json .Config.Labels}}\t{{json .RepoDigests}}'], capture_output=True, text=True)
+                              '{{json .Config.Labels}}\t{{json .RepoDigests}}\t{{json .Created}}'],
+                             capture_output=True, text=True)
         if out.returncode == 0:
-            labels, digests = (json.loads(part) for part in out.stdout.strip().split("\t", 1))
+            labels, digests, created = (json.loads(part) for part in out.stdout.strip().split("\t", 2))
             labels = labels or {}
             info["version"] = info.get("version") or labels.get("org.opencontainers.image.version")
             info["revision"] = labels.get("org.opencontainers.image.revision")
-            info["date"] = labels.get("org.opencontainers.image.created")
+            # images before about 1.14 have no created label; their build time is within minutes of the release
+            info["date"] = labels.get("org.opencontainers.image.created") or created
             info["image"] = (digests or [image])[0]
         return {k: v for k, v in info.items() if v}
 
