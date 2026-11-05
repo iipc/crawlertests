@@ -178,8 +178,8 @@ def scores_table(results: dict, extra_columns=None) -> str:
     notes = "".join(f'<p class="desc" id="note-{_e(c)}"><b>{_e(c)}*</b>: {_e(info["note"])}</p>'
                     for c, info in results["crawlers"].items() if info.get("note"))
     return f"""<div class="scroll"><table>
-<tr><th>crawler</th>{extra_head}<th>captured ↑</th><th>overcrawled ↓</th><th>accuracy ↑</th>
-<th>time</th><th>message</th></tr>
+<tr><th>Crawler</th>{extra_head}<th>Captured ↑</th><th>Overcrawled ↓</th><th>Accuracy ↑</th>
+<th>Time</th><th>Message</th></tr>
 {''.join(rows)}
 </table></div>
 <p class="desc"><b>Captured</b>: URLs a case expects that were captured.
@@ -208,7 +208,7 @@ def cases_table(results: dict, case_link=lambda name: f"#{name}", cell_link=None
         rows.append(f'<tr><th scope="row"><a href="{_e(case_link(name))}">{_e(name)}</a> {tags}</th>'
                     + "".join(cells) + "</tr>")
     return f"""<div class="scroll"><table>
-<tr><th>case</th>{head}</tr>
+<tr><th>Case</th>{head}</tr>
 {''.join(rows)}
 </table></div>"""
 
@@ -254,7 +254,7 @@ def _case_detail(name: str, case: dict, crawlers: list[str], source_link=None) -
             items = "".join(f"<li><code>{_e(k)}</code></li>" for k in r["not_archived"])
             notes.append(f"<h3>{_e(c)}: requested but not archived</h3><ul>{items}</ul>")
 
-    table = (f'<div class="scroll"><table><tr><th>URL</th><th>expectation</th>{head}</tr>{"".join(rows)}'
+    table = (f'<div class="scroll"><table><tr><th>URL</th><th>Expectation</th>{head}</tr>{"".join(rows)}'
              f"</table></div>") if rows else "<p class=\"desc\">No crawler results.</p>"
     heading = f'<a href="{_e(source_link(name))}">{_e(name)}</a>' if source_link else _e(name)
     return (f'<section class="case" id="{_e(name)}"><h2>{heading} — {_e(case["title"])}</h2>'

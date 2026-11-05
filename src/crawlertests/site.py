@@ -108,7 +108,7 @@ def build_site(results_dir: Path, cases: dict[str, Case], out: Path, repo: Path 
     for run, rs in by_run.items():
         results = results_for([(series_label(r), r) for r in rs], cases, run)
         when = ", ".join(sorted({f"{series_label(r)}: {version_label(r)}" for r in rs}))
-        intro = f'<nav><a href="../../index.html">← all results</a></nav><p class="desc">{_e(when)}</p>'
+        intro = f'<nav><a href="../../index.html">← All Results</a></nav><p class="desc">{_e(when)}</p>'
         path = out / "runs" / run / "index.html"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(_retitle(results, f"Run {run}", intro))
@@ -128,8 +128,8 @@ def _retitle(results: dict, title: str, intro: str) -> str:
 def _write_index(out: Path, cases, series, slugs, scored):
     colors = {c: SERIES_COLORS[i % len(SERIES_COLORS)] for i, c in enumerate(slugs)}
     body = f"""<h1>Web archiving crawler tests</h1>
-<nav><a href="compare.html">compare runs</a>
-<a href="{SOURCE}">test suite</a></nav>
+<nav><a href="compare.html">Compare Runs</a>
+<a href="{SOURCE}">Test Suite</a></nav>
 <p class="desc">How well web archiving crawlers discover and capture the resources of a set of small test sites.
 Saved runs are re-scored whenever the expected results change.</p>
 {_view(series, slugs, cases, scored, colors) if series else '<p class="desc">No runs yet.</p>'}
@@ -142,10 +142,10 @@ def _view(series, view_slugs, cases, scored, colors) -> str:
     results = results_for([(r["crawler"], r) for r in latest], cases, "latest")
     by_label = {r["crawler"]: r for r in latest}
     columns = [
-        ("version", lambda label, info: _e(version_label(by_label[label]))),
-        ("date", lambda label, info: _e(record_date(by_label[label]).date().isoformat())),
-        ("", lambda label, info: f'<a href="history/{_e(series_slug(by_label[label]))}.html">history</a> · '
-                                 f'<a href="runs/{_e(by_label[label]["run"])}/index.html">report</a>'),
+        ("Version", lambda label, info: _e(version_label(by_label[label]))),
+        ("Date", lambda label, info: _e(record_date(by_label[label]).date().isoformat())),
+        ("", lambda label, info: f'<a href="history/{_e(series_slug(by_label[label]))}.html">History</a> · '
+                                 f'<a href="runs/{_e(by_label[label]["run"])}/index.html">Report</a>'),
     ]
     chart = _chart(series, view_slugs, scored, colors, len(cases))
     matrix = cases_table(results, case_link=_case_source,
@@ -242,8 +242,8 @@ def _write_history(out: Path, slug: str, records: list[dict], cases, scored, lim
     label = series_label(records[-1])
     head = "".join(f'<th class="run"><a href="../runs/{_e(r["run"])}/index.html">{_e(version_label(r))}</a><br>'
                    f'{record_date(r).date()}</th>' for r in records)
-    summary = [("captured ↑", "captured", "expected"), ("overcrawled ↓", "overcrawled", "unexpected"),
-               ("accuracy ↑", "hits", "total")]
+    summary = [("Captured ↑", "captured", "expected"), ("Overcrawled ↓", "overcrawled", "unexpected"),
+               ("Accuracy ↑", "hits", "total")]
     rows = []
     for heading, n, d in summary:
         cells = []
@@ -269,13 +269,13 @@ def _write_history(out: Path, slug: str, records: list[dict], cases, scored, lim
             previous = now
         if any(name in scored[(r["run"], r["crawler"])][0] for r in records):
             rows.append(f'<tr><th scope="row" title="{_e(case.title)}">{_e(name)}</th>{"".join(cells)}</tr>')
-    body = f"""<nav><a href="../index.html">← all results</a><a href="../compare.html">compare runs</a></nav>
+    body = f"""<nav><a href="../index.html">← All Results</a><a href="../compare.html">Compare Runs</a></nav>
 <h1>{_e(label)}: history</h1>
 {f'<p class="desc"><b>Note</b>: {_e(note)}</p>' if (note := crawler_note(records[-1])) else ""}
 <p class="desc">Each case's result in the last {len(records)} saved runs, oldest first, scored against the current
 tests. An outlined cell differs from the run before.</p>
 <div class="scroll"><table>
-<tr><th>case</th>{head}</tr>
+<tr><th>Case</th>{head}</tr>
 {''.join(rows)}
 </table></div>"""
     path = out / "history" / f"{slug}.html"
@@ -297,7 +297,7 @@ def _write_compare(out: Path, records: list[dict], scored):
                       "label": f"{series_label(r)} — {version_label(r)} ({record_date(r).date()})"})
     (out / "data").mkdir(exist_ok=True)
     (out / "data" / "index.json").write_text(json.dumps(index, indent=1))
-    body = """<nav><a href="index.html">← all results</a></nav>
+    body = """<nav><a href="index.html">← All Results</a></nav>
 <h1>Compare runs</h1>
 <p class="desc">Expectations met by one run and not the other, scored against the current tests.</p>
 <div class="pickers">
@@ -340,7 +340,7 @@ async function show() {
     out.append(el("h2", `${title} (${rows.length})`));
     if (!rows.length) { out.append(el("p", "None.", "desc")); continue; }
     const table = el("table"), head = table.insertRow();
-    head.append(el("th", "case"), el("th", "expectation"));
+    head.append(el("th", "Case"), el("th", "Expectation"));
     for (const [name, label] of rows) {
       const tr = table.insertRow(); tr.append(el("td", name));
       const td = el("td", null, cls); td.append(el("code", label)); td.style.textAlign = "left"; tr.append(td);
