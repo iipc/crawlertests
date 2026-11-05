@@ -316,3 +316,9 @@ separate "crawldiagnostics" WARCs, which the harness reads too.
 discovery for the first seed, within that seed's scope, so cases tagged
 `sitemaps` are seeded first. The container reaches the fixture server through
 `host.containers.internal` (podman) or `host.docker.internal` (docker).
+
+## Contributing and license
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to dispute an expectation,
+propose a case, improve how a crawler is set up, or add a crawler. The
+project is licensed under the [Apache License 2.0](LICENSE).
