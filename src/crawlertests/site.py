@@ -21,6 +21,10 @@ from .report import STYLE, _captured, _cell_class, _e, _ratio, case_details, cas
 
 SOURCE = "https://github.com/iipc/crawlertests"
 
+
+def _case_source(name: str) -> str:
+    return f"{SOURCE}/tree/main/cases/{name}"
+
 # A categorical palette that reads on both the light and dark backgrounds.
 SERIES_COLORS = ["#4269d0", "#ef6c3b", "#3ca951", "#a463f2", "#d4a106", "#2bb3c0", "#e2559b", "#8c6d4f"]
 
@@ -117,7 +121,7 @@ def _retitle(results: dict, title: str, intro: str) -> str:
 {scores_table(results)}
 <h2>Cases</h2>
 {cases_table(results)}
-{case_details(results)}"""
+{case_details(results, source_link=_case_source)}"""
     return page(title, body, root="../../")
 
 
@@ -127,8 +131,7 @@ def _write_index(out: Path, cases, series, slugs, scored):
 <nav><a href="compare.html">compare runs</a>
 <a href="{SOURCE}">test suite</a></nav>
 <p class="desc">How well web archiving crawlers discover and capture the resources of a set of small test sites.
-Saved runs are re-scored whenever the expected results change. A run only covers the cases that existed
-when it was crawled, so the chart compares runs on the cases they all share.</p>
+Saved runs are re-scored whenever the expected results change.</p>
 {_view(series, slugs, cases, scored, colors) if series else '<p class="desc">No runs yet.</p>'}
 """
     (out / "index.html").write_text(page("Crawler tests", body, root="./"))
@@ -145,7 +148,7 @@ def _view(series, view_slugs, cases, scored, colors) -> str:
                                  f'<a href="runs/{_e(by_label[label]["run"])}/index.html">report</a>'),
     ]
     chart = _chart(series, view_slugs, scored, colors, len(cases))
-    matrix = cases_table(results, case_link=lambda name: f"{SOURCE}/tree/main/cases/{name}",
+    matrix = cases_table(results, case_link=_case_source,
                          cell_link=lambda name, label: f"runs/{by_label[label]['run']}/index.html#{name}")
     return f"""<h2>Latest results</h2>
 {scores_table(results, columns)}
@@ -212,7 +215,7 @@ def _chart(series, slugs, scored, colors: dict[str, str], case_count: int) -> st
     return (f'<div class="legend">{"".join(legend)}</div>{svg}'
             f'<p class="desc">Expectations met on the {len(shared)} of {case_count} cases that every run shown crawled'
             f'{", so newer cases don't count until older versions are re-crawled" if len(shared) < case_count else ""}. '
-            'Points are placed at the date of the crawler version (or of the run, for local runs); '
+            'Points are placed at the date of the crawler version; '
             'hollow points are development builds. '
             'Hover a point for details; click it for the run report.</p>')
 

@@ -213,9 +213,10 @@ def cases_table(results: dict, case_link=lambda name: f"#{name}", cell_link=None
 </table></div>"""
 
 
-def case_details(results: dict) -> str:
+def case_details(results: dict, source_link=None) -> str:
+    """source_link(case name) gives a link to the case's sources, shown on its heading."""
     crawlers = list(results["crawlers"])
-    return "".join(_case_detail(name, case, crawlers) for name, case in results["cases"].items())
+    return "".join(_case_detail(name, case, crawlers, source_link) for name, case in results["cases"].items())
 
 
 def render_html(results: dict, title: str = "Crawler test report", intro: str = "", root: str = "") -> str:
@@ -232,7 +233,7 @@ def render_html(results: dict, title: str = "Crawler test report", intro: str = 
     return page(title, body, root)
 
 
-def _case_detail(name: str, case: dict, crawlers: list[str]) -> str:
+def _case_detail(name: str, case: dict, crawlers: list[str], source_link=None) -> str:
     ran = [c for c in crawlers if c in case["results"]]
     head = "".join(f"<th>{_e(c)}</th>" for c in ran)
     rows = []
@@ -255,5 +256,6 @@ def _case_detail(name: str, case: dict, crawlers: list[str]) -> str:
 
     table = (f'<div class="scroll"><table><tr><th>URL</th><th>expectation</th>{head}</tr>{"".join(rows)}'
              f"</table></div>") if rows else "<p class=\"desc\">No crawler results.</p>"
-    return (f'<section class="case" id="{_e(name)}"><h2>{_e(name)} — {_e(case["title"])}</h2>'
+    heading = f'<a href="{_e(source_link(name))}">{_e(name)}</a>' if source_link else _e(name)
+    return (f'<section class="case" id="{_e(name)}"><h2>{heading} — {_e(case["title"])}</h2>'
             f'<p class="desc">{_e(case["description"])}</p>{table}{"".join(notes)}</section>')
