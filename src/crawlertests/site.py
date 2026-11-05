@@ -108,7 +108,7 @@ def build_site(results_dir: Path, cases: dict[str, Case], out: Path, repo: Path 
     for run, rs in by_run.items():
         results = results_for([(series_label(r), r) for r in rs], cases, run)
         when = ", ".join(sorted({f"{series_label(r)}: {version_label(r)}" for r in rs}))
-        intro = f'<nav><a href="../../index.html">← All Results</a></nav><p class="desc">{_e(when)}</p>'
+        intro = f'<nav><a href="../../index.html">← All results</a></nav><p class="desc">{_e(when)}</p>'
         path = out / "runs" / run / "index.html"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(_retitle(results, f"Run {run}", intro))
@@ -128,8 +128,8 @@ def _retitle(results: dict, title: str, intro: str) -> str:
 def _write_index(out: Path, cases, series, slugs, scored):
     colors = {c: SERIES_COLORS[i % len(SERIES_COLORS)] for i, c in enumerate(slugs)}
     body = f"""<h1>Web archiving crawler tests</h1>
-<nav><a href="compare.html">Compare Runs</a>
-<a href="{SOURCE}">Test Suite</a></nav>
+<nav><a href="compare.html">Compare runs</a>
+<a href="{SOURCE}">Test suite</a></nav>
 <p class="desc">How well web archiving crawlers discover and capture the resources of a set of small test sites.
 Saved runs are re-scored whenever the expected results change.</p>
 {_view(series, slugs, cases, scored, colors) if series else '<p class="desc">No runs yet.</p>'}
@@ -269,7 +269,7 @@ def _write_history(out: Path, slug: str, records: list[dict], cases, scored, lim
             previous = now
         if any(name in scored[(r["run"], r["crawler"])][0] for r in records):
             rows.append(f'<tr><th scope="row" title="{_e(case.title)}">{_e(name)}</th>{"".join(cells)}</tr>')
-    body = f"""<nav><a href="../index.html">← All Results</a><a href="../compare.html">Compare Runs</a></nav>
+    body = f"""<nav><a href="../index.html">← All results</a><a href="../compare.html">Compare runs</a></nav>
 <h1>{_e(label)}: history</h1>
 {f'<p class="desc"><b>Note</b>: {_e(note)}</p>' if (note := crawler_note(records[-1])) else ""}
 <p class="desc">Each case's result in the last {len(records)} saved runs, oldest first, scored against the current
@@ -297,7 +297,7 @@ def _write_compare(out: Path, records: list[dict], scored):
                       "label": f"{series_label(r)} — {version_label(r)} ({record_date(r).date()})"})
     (out / "data").mkdir(exist_ok=True)
     (out / "data" / "index.json").write_text(json.dumps(index, indent=1))
-    body = """<nav><a href="index.html">← All Results</a></nav>
+    body = """<nav><a href="index.html">← All results</a></nav>
 <h1>Compare runs</h1>
 <p class="desc">Expectations met by one run and not the other, scored against the current tests.</p>
 <div class="pickers">
