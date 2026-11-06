@@ -1,0 +1,36 @@
+{
+ "format": 1,
+ "run": "42208392769-browsertrix-1.15.2",
+ "time": "2026-11-06T11:15:52+00:00",
+ "crawler": "browsertrix",
+ "type": "browsertrix",
+ "note": null,
+ "track": "release",
+ "version": {"product": "Browsertrix Crawler", "version": "1.15.2", "revision": "3aff4355cfbe8a197439f9682621ef1f2b62ea36", "date": "2026-10-29T01:09:31.060Z", "image": "webrecorder/browsertrix-crawler@sha256:72480eab537dc94646f04dae3cb5c1f883f85385a8b09c5161d8ab9bf6a65863"},
+ "suite": {"revision": "ad6590ec8bb58d47b880b583b714e474201e6218", "dirty": false},
+ "platform": "linux-x86_64",
+ "status": "ok",
+ "message": null,
+ "duration": 8.335849674999992,
+ "cases": [
+  "html-not-links",
+  "html-template"
+ ],
+ "harness": 1,
+ "case_hashes": {"html-not-links": "81375a748710d0ee", "html-template": "ab8853ddc5f3ba6e"},
+ "hash_scheme": 2,
+ "captures": [
+  ["/cases/html-not-links/", "GET", 200],
+  ["/cases/html-not-links/real.html", "GET", 200],
+  ["/cases/html-template/", "GET", 200],
+  ["/favicon.ico", "GET", 404]
+ ],
+ "requested": [
+  "/cases/html-not-links/",
+  "/cases/html-not-links/real.html",
+  "/cases/html-template/",
+  "/favicon.ico",
+  "/robots.txt",
+  "/sitemap.xml"
+ ]
+}

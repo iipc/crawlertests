@@ -1,0 +1,46 @@
+{
+ "format": 1,
+ "run": "42208392769-heritrix-release-3.16.0",
+ "time": "2026-11-06T11:16:27+00:00",
+ "crawler": "heritrix",
+ "type": "heritrix",
+ "note": null,
+ "track": "release",
+ "version": {"product": "Heritrix", "version": "3.16.0", "revision": "7af0bf56eaf1df032050f387d5650d6d80cc1b44", "date": "2026-07-03T01:40:18Z"},
+ "suite": {"revision": "ad6590ec8bb58d47b880b583b714e474201e6218", "dirty": false},
+ "platform": "linux-x86_64",
+ "status": "ok",
+ "message": null,
+ "duration": 5.688638917999981,
+ "cases": [
+  "html-not-links",
+  "html-template"
+ ],
+ "harness": 1,
+ "case_hashes": {"html-not-links": "81375a748710d0ee", "html-template": "ab8853ddc5f3ba6e"},
+ "hash_scheme": 2,
+ "captures": [
+  ["/cases/html-not-links/", "GET", 200],
+  ["/cases/html-not-links/old.png", "GET", 200],
+  ["/cases/html-not-links/real.html", "GET", 200],
+  ["/cases/html-not-links/textarea.html", "GET", 200],
+  ["/cases/html-not-links/xmp.html", "GET", 200],
+  ["/cases/html-template/", "GET", 200],
+  ["/cases/html-template/template-img.png", "GET", 200],
+  ["/cases/html-template/template-link.html", "GET", 200],
+  ["/favicon.ico", "GET", 404],
+  ["/robots.txt", "GET", 404]
+ ],
+ "requested": [
+  "/cases/html-not-links/",
+  "/cases/html-not-links/old.png",
+  "/cases/html-not-links/real.html",
+  "/cases/html-not-links/textarea.html",
+  "/cases/html-not-links/xmp.html",
+  "/cases/html-template/",
+  "/cases/html-template/template-img.png",
+  "/cases/html-template/template-link.html",
+  "/favicon.ico",
+  "/robots.txt"
+ ]
+}
