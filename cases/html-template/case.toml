@@ -1,0 +1,4 @@
+title = "Template content"
+description = "An image and a link inside a <template>, which a script clones into the page when a button is clicked. Template content is inert, so a browser doesn't load the image until then, but replay needs it as soon as someone clicks. A crawler can find them by reading the template's markup, or by clicking."
+tags = ["html", "js", "interaction"]
+expect = ["template-img.png", "template-link.html"]

@@ -1,0 +1,13 @@
+<!doctype html>
+<title>Template content</title>
+<template id="card">
+  <figure><img src="template-img.png" alt=""><figcaption><a href="template-link.html">Details</a></figcaption></figure>
+</template>
+<div id="cards"></div>
+<button id="show">Show card</button>
+<script>
+  document.getElementById("show").addEventListener("click", function () {
+    var card = document.getElementById("card").content.cloneNode(true);
+    document.getElementById("cards").appendChild(card);
+  });
+</script>

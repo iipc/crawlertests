@@ -1,10 +1,10 @@
 title = "Link-like text that isn't a link"
-description = "Markup that a browser never treats as a link or resource: tags inside HTML and CSS comments, <textarea>, <xmp>, CSS comments and an unused <template>, a path in plain text, and javascript:, mailto:, tel: and data: URLs that a naive extractor might resolve as relative paths."
+description = "Markup that a browser never treats as a link or resource: tags inside HTML and CSS comments, <textarea>, <xmp>, CSS comments, a path in plain text, and javascript:, mailto:, tel: and data: URLs that a naive extractor might resolve as relative paths."
 tags = ["html", "precision"]
 expect = ["real.html"]
 expect_not = [
   "commented.html", "commented.png", "old.png", "textarea.html", "xmp.html", "style-comment.html",
-  "template.png", "docs/plain-text.html",
+  "docs/plain-text.html",
   # non-HTTP schemes, as a naive extractor would resolve them against the page
   "./javascript:void(0)", "./mailto:archive@example.org", "./tel:+15555550100", "./data:text/html,hello",
 ]
